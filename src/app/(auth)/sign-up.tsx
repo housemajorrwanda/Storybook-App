@@ -1,4 +1,3 @@
-import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { useRef, useState } from "react";
 import {
@@ -27,7 +26,7 @@ export default function SignUpScreen() {
   const passwordRef = useRef<TextInput>(null);
   const confirmRef = useRef<TextInput>(null);
 
-  const [name, setName] = useState("");
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -35,8 +34,10 @@ export default function SignUpScreen() {
   const [error, setError] = useState("");
   const [focused, setFocused] = useState<string | null>(null);
 
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/;
+
   async function handleSignUp() {
-    if (!name.trim() || !email.trim() || !password || !confirm) {
+    if (!fullName.trim() || !email.trim() || !password || !confirm) {
       setError("Please fill in all fields.");
       return;
     }
@@ -44,16 +45,18 @@ export default function SignUpScreen() {
       setError("Passwords do not match.");
       return;
     }
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    if (password.length < 8 || !passwordRegex.test(password)) {
+      setError(
+        "Password must be 8+ characters with uppercase, lowercase, number, and special character (@$!%*?&).",
+      );
       return;
     }
     setError("");
     setLoading(true);
     try {
-      await signUp(name.trim(), email.trim(), password);
-    } catch {
-      setError("Failed to create account. Please try again.");
+      await signUp(fullName.trim(), email.trim(), password);
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to create account. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -83,35 +86,41 @@ export default function SignUpScreen() {
         >
           <View style={styles.inner}>
             {/* Branding */}
-            <Animated.View entering={FadeInDown.duration(500).springify()} style={styles.brand}>
-              <Image
-                source={require("@/assets/images/expo-logo.png")}
-                style={styles.logo}
-                contentFit="contain"
-              />
+            <Animated.View
+              entering={FadeInDown.duration(500).springify()}
+              style={styles.brand}
+            >
+              <View style={[styles.monogram, { backgroundColor: theme.primary }]}>
+                <ThemedText style={[styles.monogramText, { color: theme.primaryForeground }]}>
+                  HM
+                </ThemedText>
+              </View>
               <ThemedText type="subtitle" style={styles.center}>
                 Create account
               </ThemedText>
               <ThemedText themeColor="textSecondary" style={styles.center}>
-                Join us today. It's free.
+                Join HouseMajor. It's free.
               </ThemedText>
             </Animated.View>
 
             {/* Form */}
-            <Animated.View entering={FadeInUp.delay(120).duration(500).springify()} style={styles.form}>
+            <Animated.View
+              entering={FadeInUp.delay(120).duration(500).springify()}
+              style={styles.form}
+            >
               <View>
                 <ThemedText type="small" style={styles.label}>
                   Full name
                 </ThemedText>
                 <TextInput
-                  style={inputStyle("name")}
+                  style={inputStyle("fullName")}
                   placeholder="John Doe"
                   placeholderTextColor={theme.mutedForeground}
-                  value={name}
-                  onChangeText={setName}
+                  value={fullName}
+                  onChangeText={setFullName}
                   autoComplete="name"
                   returnKeyType="next"
-                  onFocus={() => setFocused("name")}
+                  onFocus={() => setFocused("fullName")}
                   onBlur={() => setFocused(null)}
                   onSubmitEditing={() => emailRef.current?.focus()}
                 />
@@ -222,7 +231,10 @@ export default function SignUpScreen() {
             </Animated.View>
 
             {/* Footer */}
-            <Animated.View entering={FadeInUp.delay(220).duration(400)} style={styles.footer}>
+            <Animated.View
+              entering={FadeInUp.delay(220).duration(400)}
+              style={styles.footer}
+            >
               <ThemedText themeColor="textSecondary">
                 Already have an account?{" "}
               </ThemedText>
@@ -251,7 +263,15 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.six,
   },
   brand: { alignItems: "center", gap: Spacing.two },
-  logo: { width: 56, height: 56, marginBottom: Spacing.two },
+  monogram: {
+    width: 60,
+    height: 60,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.two,
+  },
+  monogramText: { fontSize: 22, fontWeight: "700", letterSpacing: 1 },
   center: { textAlign: "center" },
   form: { gap: Spacing.three },
   label: { marginBottom: Spacing.one, fontWeight: "500" },
