@@ -48,7 +48,7 @@ export default function ProfileScreen() {
   const theme = useTheme();
   const { user, signOut } = useAuth();
 
-  const initials = user?.name
+  const initials = user?.fullName
     ?.split(' ')
     .map(w => w[0])
     .join('')
@@ -65,7 +65,7 @@ export default function ProfileScreen() {
               {initials}
             </ThemedText>
           </View>
-          <ThemedText type="subtitle">{user?.name}</ThemedText>
+          <ThemedText type="subtitle">{user?.fullName}</ThemedText>
           <ThemedText themeColor="textSecondary" style={styles.email}>
             {user?.email}
           </ThemedText>
