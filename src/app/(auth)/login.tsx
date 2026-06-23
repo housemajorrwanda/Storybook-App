@@ -1,10 +1,8 @@
 import { Link } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
@@ -13,6 +11,8 @@ import {
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppButton } from '@/components/ui/app-button';
+import { AppInput } from '@/components/ui/app-input';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth';
@@ -25,9 +25,9 @@ export default function LoginScreen() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [focused, setFocused] = useState<'email' | 'password' | null>(null);
 
   async function handleSignIn() {
     if (!email.trim() || !password) {
@@ -45,27 +45,15 @@ export default function LoginScreen() {
     }
   }
 
-  function inputStyle(field: 'email' | 'password') {
-    return [
-      styles.input,
-      {
-        borderColor: focused === field ? theme.ring : theme.border,
-        backgroundColor: theme.card,
-        color: theme.foreground,
-      },
-    ];
-  }
-
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.flex}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
         <ScrollView
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
           <View style={styles.inner}>
+
             {/* Branding */}
             <Animated.View entering={FadeInDown.duration(500).springify()} style={styles.brand}>
               <View style={[styles.monogram, { backgroundColor: theme.primary }]}>
@@ -73,9 +61,7 @@ export default function LoginScreen() {
                   HM
                 </ThemedText>
               </View>
-              <ThemedText type="subtitle" style={styles.center}>
-                Welcome back
-              </ThemedText>
+              <ThemedText type="subtitle" style={styles.center}>Welcome back</ThemedText>
               <ThemedText themeColor="textSecondary" style={styles.center}>
                 Sign in to HouseMajor.
               </ThemedText>
@@ -83,69 +69,45 @@ export default function LoginScreen() {
 
             {/* Form */}
             <Animated.View entering={FadeInUp.delay(120).duration(500).springify()} style={styles.form}>
-              <View>
-                <ThemedText type="small" style={styles.label}>
-                  Email
-                </ThemedText>
-                <TextInput
-                  style={inputStyle('email')}
-                  placeholder="you@example.com"
-                  placeholderTextColor={theme.mutedForeground}
-                  value={email}
-                  onChangeText={setEmail}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  autoComplete="email"
-                  returnKeyType="next"
-                  onFocus={() => setFocused('email')}
-                  onBlur={() => setFocused(null)}
-                  onSubmitEditing={() => passwordRef.current?.focus()}
-                />
-              </View>
+              <AppInput
+                label="Email"
+                placeholder="you@example.com"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                autoComplete="email"
+                returnKeyType="next"
+                iconLeft="envelope"
+                onSubmitEditing={() => passwordRef.current?.focus()}
+              />
 
-              <View>
-                <ThemedText type="small" style={styles.label}>
-                  Password
-                </ThemedText>
-                <TextInput
-                  ref={passwordRef}
-                  style={inputStyle('password')}
-                  placeholder="••••••••"
-                  placeholderTextColor={theme.mutedForeground}
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                  autoComplete="current-password"
-                  returnKeyType="done"
-                  onFocus={() => setFocused('password')}
-                  onBlur={() => setFocused(null)}
-                  onSubmitEditing={handleSignIn}
-                />
-              </View>
+              <AppInput
+                label="Password"
+                placeholder="••••••••"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                autoComplete="current-password"
+                returnKeyType="done"
+                iconLeft="lock"
+                iconRight={showPassword ? 'eye.slash' : 'eye'}
+                onIconRightPress={() => setShowPassword(v => !v)}
+                onSubmitEditing={handleSignIn}
+                ref={passwordRef}
+              />
 
               {error ? (
                 <View style={[styles.errorBox, { backgroundColor: theme.destructive + '18', borderColor: theme.destructive + '40' }]}>
-                  <ThemedText style={[styles.errorText, { color: theme.destructive }]}>
-                    {error}
-                  </ThemedText>
+                  <ThemedText style={{ color: theme.destructive, fontSize: 14 }}>{error}</ThemedText>
                 </View>
               ) : null}
 
-              <Pressable
-                style={({ pressed }) => [
-                  styles.button,
-                  { backgroundColor: theme.primary, opacity: pressed || loading ? 0.8 : 1 },
-                ]}
-                onPress={handleSignIn}
-                disabled={loading}>
-                {loading ? (
-                  <ActivityIndicator color={theme.primaryForeground} />
-                ) : (
-                  <ThemedText style={[styles.buttonText, { color: theme.primaryForeground }]}>
-                    Sign in
-                  </ThemedText>
-                )}
-              </Pressable>
+              <Link href="/(auth)/forgot-password" style={{ alignSelf: 'flex-end' }}>
+                <ThemedText type="linkPrimary" style={styles.forgotText}>Forgot password?</ThemedText>
+              </Link>
+
+              <AppButton label="Sign in" onPress={handleSignIn} loading={loading} size="lg" />
             </Animated.View>
 
             {/* Footer */}
@@ -187,32 +149,7 @@ const styles = StyleSheet.create({
   monogramText: { fontSize: 22, fontWeight: '700', letterSpacing: 1 },
   center: { textAlign: 'center' },
   form: { gap: Spacing.three },
-  label: { marginBottom: Spacing.one, fontWeight: '500' },
-  input: {
-    height: 48,
-    borderWidth: 1.5,
-    borderRadius: 10,
-    paddingHorizontal: Spacing.three,
-    fontSize: 16,
-  },
-  errorBox: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: Spacing.two + 4,
-  },
-  errorText: { fontSize: 14 },
-  button: {
-    height: 50,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: Spacing.one,
-  },
-  buttonText: { fontSize: 16, fontWeight: '600' },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-  },
+  forgotText: { fontSize: 13 },
+  errorBox: { borderWidth: 1, borderRadius: 8, padding: Spacing.two + 4 },
+  footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' },
 });
