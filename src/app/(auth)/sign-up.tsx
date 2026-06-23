@@ -1,22 +1,22 @@
-import { Link } from "expo-router";
-import { useRef, useState } from "react";
+import { Link } from 'expo-router';
+import { useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
   View,
-} from "react-native";
-import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
-import { SafeAreaView } from "react-native-safe-area-context";
+} from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
-import { useAuth } from "@/context/auth";
-import { useTheme } from "@/hooks/use-theme";
+import { AppButton } from '@/components/ui/app-button';
+import { AppInput } from '@/components/ui/app-input';
+import { ThemedText } from '@/components/themed-text';
+import { Spacing } from '@/constants/theme';
+import { useAuth } from '@/context/auth';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function SignUpScreen() {
   const theme = useTheme();
@@ -26,218 +26,133 @@ export default function SignUpScreen() {
   const passwordRef = useRef<TextInput>(null);
   const confirmRef = useRef<TextInput>(null);
 
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [focused, setFocused] = useState<string | null>(null);
+  const [error, setError] = useState('');
 
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/;
 
   async function handleSignUp() {
     if (!fullName.trim() || !email.trim() || !password || !confirm) {
-      setError("Please fill in all fields.");
+      setError('Please fill in all fields.');
       return;
     }
     if (password !== confirm) {
-      setError("Passwords do not match.");
+      setError('Passwords do not match.');
       return;
     }
     if (password.length < 8 || !passwordRegex.test(password)) {
-      setError(
-        "Password must be 8+ characters with uppercase, lowercase, number, and special character (@$!%*?&).",
-      );
+      setError('Password must be 8+ characters with uppercase, lowercase, number, and special character (@$!%*?&).');
       return;
     }
-    setError("");
+    setError('');
     setLoading(true);
     try {
       await signUp(fullName.trim(), email.trim(), password);
     } catch (e: any) {
-      setError(e?.message ?? "Failed to create account. Please try again.");
+      setError(e?.message ?? 'Failed to create account. Please try again.');
     } finally {
       setLoading(false);
     }
   }
 
-  function inputStyle(field: string) {
-    return [
-      styles.input,
-      {
-        borderColor: focused === field ? theme.ring : theme.border,
-        backgroundColor: theme.card,
-        color: theme.foreground,
-      },
-    ];
-  }
-
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.flex}
-      >
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
         <ScrollView
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+          showsVerticalScrollIndicator={false}>
           <View style={styles.inner}>
+
             {/* Branding */}
-            <Animated.View
-              entering={FadeInDown.duration(500).springify()}
-              style={styles.brand}
-            >
+            <Animated.View entering={FadeInDown.duration(500).springify()} style={styles.brand}>
               <View style={[styles.monogram, { backgroundColor: theme.primary }]}>
                 <ThemedText style={[styles.monogramText, { color: theme.primaryForeground }]}>
                   HM
                 </ThemedText>
               </View>
-              <ThemedText type="subtitle" style={styles.center}>
-                Create account
-              </ThemedText>
+              <ThemedText type="subtitle" style={styles.center}>Create account</ThemedText>
               <ThemedText themeColor="textSecondary" style={styles.center}>
                 Join HouseMajor. It's free.
               </ThemedText>
             </Animated.View>
 
             {/* Form */}
-            <Animated.View
-              entering={FadeInUp.delay(120).duration(500).springify()}
-              style={styles.form}
-            >
-              <View>
-                <ThemedText type="small" style={styles.label}>
-                  Full name
-                </ThemedText>
-                <TextInput
-                  style={inputStyle("fullName")}
-                  placeholder="John Doe"
-                  placeholderTextColor={theme.mutedForeground}
-                  value={fullName}
-                  onChangeText={setFullName}
-                  autoComplete="name"
-                  returnKeyType="next"
-                  onFocus={() => setFocused("fullName")}
-                  onBlur={() => setFocused(null)}
-                  onSubmitEditing={() => emailRef.current?.focus()}
-                />
-              </View>
+            <Animated.View entering={FadeInUp.delay(120).duration(500).springify()} style={styles.form}>
+              <AppInput
+                label="Full name"
+                placeholder="John Doe"
+                value={fullName}
+                onChangeText={setFullName}
+                autoComplete="name"
+                autoCapitalize="words"
+                returnKeyType="next"
+                iconLeft="person"
+                onSubmitEditing={() => emailRef.current?.focus()}
+              />
 
-              <View>
-                <ThemedText type="small" style={styles.label}>
-                  Email
-                </ThemedText>
-                <TextInput
-                  ref={emailRef}
-                  style={inputStyle("email")}
-                  placeholder="you@example.com"
-                  placeholderTextColor={theme.mutedForeground}
-                  value={email}
-                  onChangeText={setEmail}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  autoComplete="email"
-                  returnKeyType="next"
-                  onFocus={() => setFocused("email")}
-                  onBlur={() => setFocused(null)}
-                  onSubmitEditing={() => passwordRef.current?.focus()}
-                />
-              </View>
+              <AppInput
+                label="Email"
+                placeholder="you@example.com"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                autoComplete="email"
+                returnKeyType="next"
+                iconLeft="envelope"
+                onSubmitEditing={() => passwordRef.current?.focus()}
+                ref={emailRef}
+              />
 
-              <View>
-                <ThemedText type="small" style={styles.label}>
-                  Password
-                </ThemedText>
-                <TextInput
-                  ref={passwordRef}
-                  style={inputStyle("password")}
-                  placeholder="••••••••"
-                  placeholderTextColor={theme.mutedForeground}
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                  autoComplete="new-password"
-                  returnKeyType="next"
-                  onFocus={() => setFocused("password")}
-                  onBlur={() => setFocused(null)}
-                  onSubmitEditing={() => confirmRef.current?.focus()}
-                />
-              </View>
+              <AppInput
+                label="Password"
+                placeholder="••••••••"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                autoComplete="new-password"
+                returnKeyType="next"
+                iconLeft="lock"
+                iconRight={showPassword ? 'eye.slash' : 'eye'}
+                onIconRightPress={() => setShowPassword(v => !v)}
+                hint="8+ chars, uppercase, lowercase, number, special char"
+                onSubmitEditing={() => confirmRef.current?.focus()}
+                ref={passwordRef}
+              />
 
-              <View>
-                <ThemedText type="small" style={styles.label}>
-                  Confirm password
-                </ThemedText>
-                <TextInput
-                  ref={confirmRef}
-                  style={inputStyle("confirm")}
-                  placeholder="••••••••"
-                  placeholderTextColor={theme.mutedForeground}
-                  value={confirm}
-                  onChangeText={setConfirm}
-                  secureTextEntry
-                  returnKeyType="done"
-                  onFocus={() => setFocused("confirm")}
-                  onBlur={() => setFocused(null)}
-                  onSubmitEditing={handleSignUp}
-                />
-              </View>
+              <AppInput
+                label="Confirm password"
+                placeholder="••••••••"
+                value={confirm}
+                onChangeText={setConfirm}
+                secureTextEntry={!showConfirm}
+                returnKeyType="done"
+                iconLeft="lock.fill"
+                iconRight={showConfirm ? 'eye.slash' : 'eye'}
+                onIconRightPress={() => setShowConfirm(v => !v)}
+                onSubmitEditing={handleSignUp}
+                ref={confirmRef}
+              />
 
               {error ? (
-                <View
-                  style={[
-                    styles.errorBox,
-                    {
-                      backgroundColor: theme.destructive + "18",
-                      borderColor: theme.destructive + "40",
-                    },
-                  ]}
-                >
-                  <ThemedText
-                    style={[styles.errorText, { color: theme.destructive }]}
-                  >
-                    {error}
-                  </ThemedText>
+                <View style={[styles.errorBox, { backgroundColor: theme.destructive + '18', borderColor: theme.destructive + '40' }]}>
+                  <ThemedText style={{ color: theme.destructive, fontSize: 14 }}>{error}</ThemedText>
                 </View>
               ) : null}
 
-              <Pressable
-                style={({ pressed }) => [
-                  styles.button,
-                  {
-                    backgroundColor: theme.primary,
-                    opacity: pressed || loading ? 0.8 : 1,
-                  },
-                ]}
-                onPress={handleSignUp}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color={theme.primaryForeground} />
-                ) : (
-                  <ThemedText
-                    style={[
-                      styles.buttonText,
-                      { color: theme.primaryForeground },
-                    ]}
-                  >
-                    Create account
-                  </ThemedText>
-                )}
-              </Pressable>
+              <AppButton label="Create account" onPress={handleSignUp} loading={loading} size="lg" />
             </Animated.View>
 
             {/* Footer */}
-            <Animated.View
-              entering={FadeInUp.delay(220).duration(400)}
-              style={styles.footer}
-            >
-              <ThemedText themeColor="textSecondary">
-                Already have an account?{" "}
-              </ThemedText>
+            <Animated.View entering={FadeInUp.delay(220).duration(400)} style={styles.footer}>
+              <ThemedText themeColor="textSecondary">Already have an account? </ThemedText>
               <Link href="/(auth)/login">
                 <ThemedText type="linkPrimary">Sign in</ThemedText>
               </Link>
@@ -252,54 +167,28 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   flex: { flex: 1 },
-  scroll: { flexGrow: 1, alignItems: "center" },
+  scroll: { flexGrow: 1, alignItems: 'center' },
   inner: {
     flex: 1,
-    width: "100%",
+    width: '100%',
     maxWidth: 420,
     paddingHorizontal: Spacing.four,
-    justifyContent: "center",
+    justifyContent: 'center',
     gap: Spacing.five,
     paddingVertical: Spacing.six,
   },
-  brand: { alignItems: "center", gap: Spacing.two },
+  brand: { alignItems: 'center', gap: Spacing.two },
   monogram: {
     width: 60,
     height: 60,
     borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: Spacing.two,
   },
-  monogramText: { fontSize: 22, fontWeight: "700", letterSpacing: 1 },
-  center: { textAlign: "center" },
+  monogramText: { fontSize: 22, fontWeight: '700', letterSpacing: 1 },
+  center: { textAlign: 'center' },
   form: { gap: Spacing.three },
-  label: { marginBottom: Spacing.one, fontWeight: "500" },
-  input: {
-    height: 48,
-    borderWidth: 1.5,
-    borderRadius: 10,
-    paddingHorizontal: Spacing.three,
-    fontSize: 16,
-  },
-  errorBox: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: Spacing.two + 4,
-  },
-  errorText: { fontSize: 14 },
-  button: {
-    height: 50,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: Spacing.one,
-  },
-  buttonText: { fontSize: 16, fontWeight: "600" },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    flexWrap: "wrap",
-  },
+  errorBox: { borderWidth: 1, borderRadius: 8, padding: Spacing.two + 4 },
+  footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' },
 });

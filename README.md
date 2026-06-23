@@ -1,56 +1,86 @@
-# Welcome to your Expo app 👋
+# HouseMajor — Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+The mobile version of HouseMajor, a Rwanda genocide testimony and memorialization platform. Built with **Expo SDK 56 / Expo Router**.
 
-## Get started
+## Stack
 
-1. Install dependencies
+- **Expo SDK 56** — file-based routing via Expo Router
+- **React Native Reanimated v4** — enter/exit animations
+- **expo-secure-store** — JWT persisted to iOS Keychain / Android Keystore
+- **axios** — API client with request/response interceptors + 401 auto sign-out
+- **expo-image** — optimized image loading
+- **expo-symbols** — SF Symbols on iOS, Material icons on Android
 
-   ```bash
-   npm install
-   ```
+Backend: NestJS API on Railway → `https://storybook-api-production.up.railway.app`
 
-2. Start the app
+## Project Structure
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```text
+src/
+├── app/
+│   ├── (auth)/            # Login, Sign-up, Forgot Password
+│   ├── (tabs)/            # Home feed, Explore, Create, Profile
+│   └── testimony/[id]     # Testimony detail (root-level stack)
+├── components/
+│   ├── ui/                # Reusable: AppButton, AppInput, ScreenHeader, EmptyState
+│   ├── testimony-card     # Feed card (regular + featured hero variant)
+│   └── app-tabs           # NativeTabs with SF Symbol icons
+├── services/
+│   ├── api.ts             # axios instance, SecureStore helpers, 401 handler
+│   ├── auth.service.ts    # login, register, getProfile, forgotPassword
+│   └── testimony.service.ts
+├── context/auth.tsx       # AuthProvider — session restore, signIn/signUp/signOut
+├── types/testimony.ts     # Full TypeScript types matching backend
+└── constants/theme.ts     # shadcn-style HSL tokens for light + dark
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Phases
 
-### Other setup steps
+### Phase 1 — Auth + Navigation
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+- Login + Sign-up with focus rings, ref-chained inputs, spring animations
+- JWT saved to SecureStore; session restored on launch via `GET /auth/profile`
+- Bottom tabs: Home, Explore, Create, Profile (SF Symbols + Material icons)
+- Auto redirect based on auth state; loading guard prevents flash
 
-## Learn more
+### Phase 2 — Testimonies Feed + Detail
 
-To learn more about developing your project with Expo, look at the following resources:
+- Home feed: `FlatList` with pull-to-refresh, infinite scroll, filter chips, debounced search
+- First card rendered as a featured hero (larger image + more excerpt lines)
+- Testimony detail: hero image, type badge, author card, location/date chips, full testimony, audio/video duration card, relatives list, image gallery
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Phase 3 — Explore + Create Testimony
 
-## Join the community
+- Explore: live search (450ms debounce), trending horizontal scroll, browse-by-type cards
+- Create: 4-step wizard — type selection → event details → testimony text → identity preference → `POST /testimonies`
+- Written testimonies now; audio/video marked coming soon
 
-Join our community of developers creating universal apps.
+### Phase 4 — Reusable Components + Forgot Password + Edit Profile *(current)*
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- `AppButton`, `AppInput`, `ScreenHeader`, `EmptyState` shared components
+- All screens refactored for consistent UI/UX
+- Forgot password flow (`POST /auth/forgot-password`)
+- Edit profile + My testimonies from profile screen
+
+## Auth Flow
+
+```text
+Launch → SecureStore.getItemAsync()
+  ├── token found → GET /auth/profile → restore user → tabs
+  └── no token / 401 → clear token → login screen
+
+Login/Sign-up → POST /auth/login|register
+  └── save access_token (JWT, 24h expiry) → redirect to tabs
+
+Any API call returns 401 (token expired mid-session)
+  └── removeToken() + setUser(null) → auto redirect to login
+```
+
+## Running Locally
+
+```bash
+npm install
+npx expo start
+```
+
+Press `i` for iOS simulator, `a` for Android, `w` for web.
