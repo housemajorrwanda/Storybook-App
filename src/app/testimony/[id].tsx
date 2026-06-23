@@ -54,6 +54,8 @@ export default function TestimonyDetailScreen() {
   const [testimony, setTestimony] = useState<Testimony | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [bookmarked, setBookmarked] = useState(false);
+  const [bookmarking, setBookmarking] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -63,6 +65,24 @@ export default function TestimonyDetailScreen() {
       .catch(() => setError('Failed to load testimony.'))
       .finally(() => setLoading(false));
   }, [id]);
+
+  async function toggleBookmark() {
+    if (!testimony || bookmarking) return;
+    setBookmarking(true);
+    const wasBookmarked = bookmarked;
+    setBookmarked(!wasBookmarked);
+    try {
+      if (wasBookmarked) {
+        await testimonyService.removeBookmark(testimony.id);
+      } else {
+        await testimonyService.addBookmark(testimony.id);
+      }
+    } catch {
+      setBookmarked(wasBookmarked);
+    } finally {
+      setBookmarking(false);
+    }
+  }
 
   const coverImage = testimony?.images?.[0]?.imageUrl;
   const authorName =
@@ -77,18 +97,27 @@ export default function TestimonyDetailScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      {/* Fixed back button */}
-      <View
-        style={[
-          styles.backBar,
-          { paddingTop: insets.top + 8, paddingBottom: 8 },
-        ]}>
+      {/* Fixed top bar */}
+      <View style={[styles.backBar, { paddingTop: insets.top + 8, paddingBottom: 8 }]}>
         <Pressable
           style={[styles.backBtn, { backgroundColor: theme.card, borderColor: theme.border }]}
           onPress={() => router.back()}>
           <SymbolView name="chevron.left" size={16} tintColor={theme.foreground} />
           <ThemedText style={styles.backText}>Back</ThemedText>
         </Pressable>
+
+        {testimony && (
+          <Pressable
+            style={[styles.bookmarkBtn, { backgroundColor: theme.card, borderColor: theme.border }]}
+            onPress={toggleBookmark}
+            disabled={bookmarking}>
+            <SymbolView
+              name={bookmarked ? 'bookmark.fill' : 'bookmark'}
+              size={16}
+              tintColor={bookmarked ? theme.primary : theme.foreground}
+            />
+          </Pressable>
+        )}
       </View>
 
       {loading ? (
@@ -311,11 +340,13 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 10,
     paddingHorizontal: Spacing.four,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   backBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
     gap: 4,
     paddingHorizontal: Spacing.three,
     paddingVertical: 8,
@@ -323,6 +354,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   backText: { fontSize: 14, fontWeight: '500' },
+  bookmarkBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   hero: { height: 300 },
   heroOverlay: {
