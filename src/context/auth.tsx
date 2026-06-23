@@ -1,17 +1,14 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
-type User = {
-  id: string;
-  name: string;
-  email: string;
-};
+import { getToken, removeToken, saveToken, registerUnauthorizedHandler } from '@/services/api';
+import { authService, type User } from '@/services/auth.service';
 
 type AuthContextValue = {
   user: User | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (name: string, email: string, password: string) => Promise<void>;
-  signOut: () => void;
+  signUp: (fullName: string, email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -21,22 +18,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate checking stored session (replace with real token check)
-    const timer = setTimeout(() => setIsLoading(false), 0);
-    return () => clearTimeout(timer);
+    registerUnauthorizedHandler(() => setUser(null));
+
+    async function restoreSession() {
+      try {
+        const token = await getToken();
+        if (token) {
+          const profile = await authService.getProfile();
+          setUser(profile);
+        }
+      } catch {
+        await removeToken();
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    restoreSession();
   }, []);
 
-  async function signIn(email: string, _password: string) {
-    await new Promise(resolve => setTimeout(resolve, 600));
-    setUser({ id: '1', name: email.split('@')[0], email });
+  async function signIn(email: string, password: string) {
+    const { access_token, user } = await authService.login(email, password);
+    await saveToken(access_token);
+    setUser(user);
   }
 
-  async function signUp(name: string, email: string, _password: string) {
-    await new Promise(resolve => setTimeout(resolve, 600));
-    setUser({ id: '1', name, email });
+  async function signUp(fullName: string, email: string, password: string) {
+    const { access_token, user } = await authService.register({ fullName, email, password });
+    await saveToken(access_token);
+    setUser(user);
   }
 
-  function signOut() {
+  async function signOut() {
+    await removeToken();
     setUser(null);
   }
 

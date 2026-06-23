@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
@@ -39,8 +38,8 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await signIn(email.trim(), password);
-    } catch {
-      setError('Invalid email or password.');
+    } catch (e: any) {
+      setError(e?.message ?? 'Invalid email or password.');
     } finally {
       setLoading(false);
     }
@@ -69,16 +68,16 @@ export default function LoginScreen() {
           <View style={styles.inner}>
             {/* Branding */}
             <Animated.View entering={FadeInDown.duration(500).springify()} style={styles.brand}>
-              <Image
-                source={require('@/assets/images/expo-logo.png')}
-                style={styles.logo}
-                contentFit="contain"
-              />
+              <View style={[styles.monogram, { backgroundColor: theme.primary }]}>
+                <ThemedText style={[styles.monogramText, { color: theme.primaryForeground }]}>
+                  HM
+                </ThemedText>
+              </View>
               <ThemedText type="subtitle" style={styles.center}>
                 Welcome back
               </ThemedText>
               <ThemedText themeColor="textSecondary" style={styles.center}>
-                Sign in to continue.
+                Sign in to HouseMajor.
               </ThemedText>
             </Animated.View>
 
@@ -177,7 +176,15 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.six,
   },
   brand: { alignItems: 'center', gap: Spacing.two },
-  logo: { width: 56, height: 56, marginBottom: Spacing.two },
+  monogram: {
+    width: 60,
+    height: 60,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.two,
+  },
+  monogramText: { fontSize: 22, fontWeight: '700', letterSpacing: 1 },
   center: { textAlign: 'center' },
   form: { gap: Spacing.three },
   label: { marginBottom: Spacing.one, fontWeight: '500' },
