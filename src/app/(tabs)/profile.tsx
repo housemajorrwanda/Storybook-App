@@ -1,7 +1,7 @@
 import { SymbolView } from 'expo-symbols';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -193,21 +193,31 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   avatar: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.one,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12 },
+    }),
   },
-  avatarText: { fontSize: 30, fontWeight: '700' },
-  name: { fontSize: 20, fontWeight: '700' },
+  avatarText: { fontSize: 34, fontWeight: '700' },
+  name: { fontSize: 22, fontWeight: '700' },
   email: { fontSize: 14 },
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   location: { fontSize: 13 },
   section: { gap: Spacing.two },
   sectionTitle: { fontSize: 12, fontWeight: '600', letterSpacing: 0.5, paddingHorizontal: Spacing.two },
-  card: { borderRadius: 12, borderWidth: 1, overflow: 'hidden' },
+  card: {
+    borderRadius: 14,
+    borderWidth: 1,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 8 },
+    }),
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
