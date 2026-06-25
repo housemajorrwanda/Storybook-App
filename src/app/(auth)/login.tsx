@@ -1,6 +1,9 @@
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
 import { Link } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -18,16 +21,35 @@ import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth';
 import { useTheme } from '@/hooks/use-theme';
 
+WebBrowser.maybeCompleteAuthSession();
+
+const GOOGLE_WEB_CLIENT_ID =
+  '40288313306-oehaba5t529fcqn318ifbih990skck8l.apps.googleusercontent.com';
+
 export default function LoginScreen() {
   const theme = useTheme();
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const passwordRef = useRef<TextInput>(null);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+  });
+
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const token = response.authentication?.accessToken;
+      if (token) handleGoogleSignIn(token);
+    } else if (response?.type === 'error') {
+      setError(response.error?.message ?? 'Google sign-in failed.');
+    }
+  }, [response]);
 
   async function handleSignIn() {
     if (!email.trim() || !password) {
@@ -42,6 +64,18 @@ export default function LoginScreen() {
       setError(e?.message ?? 'Invalid email or password.');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleGoogleSignIn(token: string) {
+    setGoogleLoading(true);
+    setError('');
+    try {
+      await signInWithGoogle(token);
+    } catch (e: any) {
+      setError(e?.message ?? 'Google sign-in failed. Try again.');
+    } finally {
+      setGoogleLoading(false);
     }
   }
 
@@ -108,6 +142,24 @@ export default function LoginScreen() {
               </Link>
 
               <AppButton label="Sign in" onPress={handleSignIn} loading={loading} size="lg" />
+
+              {/* Divider */}
+              <View style={styles.dividerRow}>
+                <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+                <ThemedText themeColor="textSecondary" style={styles.dividerText}>or</ThemedText>
+                <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+              </View>
+
+              {/* Google button */}
+              <AppButton
+                label="Continue with Google"
+                onPress={() => promptAsync()}
+                loading={googleLoading}
+                disabled={!request}
+                variant="outline"
+                size="lg"
+                iconLeft="globe"
+              />
             </Animated.View>
 
             {/* Footer */}
@@ -151,5 +203,8 @@ const styles = StyleSheet.create({
   form: { gap: Spacing.three },
   forgotText: { fontSize: 13 },
   errorBox: { borderWidth: 1, borderRadius: 8, padding: Spacing.two + 4 },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  dividerLine: { flex: 1, height: StyleSheet.hairlineWidth },
+  dividerText: { fontSize: 13 },
   footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' },
 });

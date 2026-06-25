@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import { SymbolView } from 'expo-symbols';
 import { useRef, useState } from 'react';
 import {
@@ -14,6 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 
+import { AppButton } from '@/components/ui/app-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
@@ -230,13 +232,7 @@ export default function CreateScreen() {
           <ThemedText themeColor="textSecondary" style={styles.doneDesc}>
             Thank you for sharing your story. Our team will review it before publishing.
           </ThemedText>
-          <Pressable
-            style={[styles.primaryBtn, { backgroundColor: theme.primary }]}
-            onPress={reset}>
-            <ThemedText style={[styles.primaryBtnText, { color: theme.primaryForeground }]}>
-              Submit Another
-            </ThemedText>
-          </Pressable>
+          <AppButton label="Submit Another" onPress={reset} size="lg" />
         </Animated.View>
       </ThemedView>
     );
@@ -288,7 +284,7 @@ export default function CreateScreen() {
                         opacity: opt.available ? 1 : 0.45,
                       },
                     ]}
-                    onPress={() => opt.available && setType(opt.type)}>
+                    onPress={() => { if (opt.available) { Haptics.selectionAsync(); setType(opt.type); } }}>
                     <View style={[styles.typeOptionIcon, { backgroundColor: type === opt.type ? theme.primary : theme.secondary }]}>
                       <SymbolView
                         name={opt.symbol as any}

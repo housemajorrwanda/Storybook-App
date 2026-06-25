@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -47,8 +48,11 @@ export function TestimonyCard({ testimony, featured = false }: Props) {
 
   return (
     <Pressable
-      style={({ pressed }) => [styles.card, { opacity: pressed ? 0.92 : 1 }]}
-      onPress={() => router.push({ pathname: '/testimony/[id]', params: { id: testimony.id } })}>
+      style={({ pressed }) => [styles.card, { opacity: pressed ? 0.88 : 1 }]}
+      onPress={() => {
+        Haptics.selectionAsync();
+        router.push({ pathname: '/testimony/[id]', params: { id: testimony.id } });
+      }}>
       <ThemedView style={[styles.inner, { borderColor: theme.border }]}>
         {/* Cover image */}
         {coverImage && (

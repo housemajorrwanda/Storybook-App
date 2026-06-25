@@ -1,5 +1,6 @@
 import { SymbolView } from 'expo-symbols';
 import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -8,6 +9,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth';
 import { useTheme } from '@/hooks/use-theme';
+import { notificationService } from '@/services/notification.service';
 
 function SettingsRow({
   icon,
@@ -61,6 +63,11 @@ export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, signOut } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    notificationService.getUnreadCount().then(setUnreadCount).catch(() => {});
+  }, []);
 
   const initials = user?.fullName
     ?.split(' ')
@@ -133,7 +140,12 @@ export default function ProfileScreen() {
               onPress={() => router.push('/my-submissions')}
             />
             <View style={[styles.sep, { backgroundColor: theme.border }]} />
-            <SettingsRow icon="bell" label="Notifications" />
+            <SettingsRow
+              icon="bell"
+              label="Notifications"
+              value={unreadCount > 0 ? String(unreadCount) : undefined}
+              onPress={() => router.push('/notifications')}
+            />
             <View style={[styles.sep, { backgroundColor: theme.border }]} />
             <SettingsRow icon="lock" label="Privacy & security" />
           </View>
