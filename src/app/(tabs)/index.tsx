@@ -11,9 +11,11 @@ import {
   TextInput,
   View,
 } from 'react-native';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { TestimonyCard } from '@/components/testimony-card';
+import { TestimonyCardSkeleton } from '@/components/testimony-card-skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -188,8 +190,10 @@ export default function HomeScreen() {
       </View>
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={theme.primary} size="large" />
+        <View style={[styles.list, { paddingTop: Spacing.three }]}>
+          {[0, 1, 2, 3].map(i => (
+            <TestimonyCardSkeleton key={i} featured={i === 0} />
+          ))}
         </View>
       ) : (
         <FlatList

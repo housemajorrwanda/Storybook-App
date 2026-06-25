@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EmptyState } from '@/components/ui/empty-state';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { TestimonyCard } from '@/components/testimony-card';
+import { TestimonyCardSkeleton } from '@/components/testimony-card-skeleton';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -43,8 +44,8 @@ export default function BookmarksScreen() {
       <ScreenHeader title="Bookmarks" showBack />
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={theme.primary} size="large" />
+        <View style={[styles.list]}>
+          {[0, 1, 2].map(i => <TestimonyCardSkeleton key={i} />)}
         </View>
       ) : (
         <FlatList

@@ -2,7 +2,6 @@ import { SymbolView } from 'expo-symbols';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   Pressable,
   RefreshControl,
@@ -11,6 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { ThemedText } from '@/components/themed-text';
@@ -133,8 +133,26 @@ export default function MySubmissionsScreen() {
       <ScreenHeader title="My Submissions" showBack />
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={theme.primary} size="large" />
+        <View style={[styles.list]}>
+          {/* Stats row skeleton */}
+          <View style={styles.statsRow}>
+            {[0, 1, 2, 3].map(i => (
+              <View key={i} style={[styles.statCard, { backgroundColor: theme.secondary }]}>
+                <Skeleton width={28} height={24} borderRadius={6} />
+                <Skeleton width={44} height={11} borderRadius={4} />
+              </View>
+            ))}
+          </View>
+          {/* Row skeletons */}
+          {[0, 1, 2, 3].map(i => (
+            <View key={i} style={[styles.row, { backgroundColor: theme.card, borderColor: theme.border }]}>
+              <Skeleton width={40} height={40} borderRadius={10} />
+              <View style={{ flex: 1, gap: 6 }}>
+                <Skeleton width="80%" height={14} borderRadius={6} />
+                <Skeleton width="50%" height={12} borderRadius={6} />
+              </View>
+            </View>
+          ))}
         </View>
       ) : (
         <FlatList

@@ -1,7 +1,6 @@
 import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   Pressable,
   RefreshControl,
@@ -11,6 +10,7 @@ import {
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { NotificationRowSkeleton } from '@/components/notification-row-skeleton';
 import { AppButton } from '@/components/ui/app-button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ScreenHeader } from '@/components/ui/screen-header';
@@ -170,8 +170,10 @@ export default function NotificationsScreen() {
       />
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={theme.primary} size="large" />
+        <View style={{ paddingTop: Spacing.two }}>
+          {[0, 1, 2, 3, 4].map(i => (
+            <NotificationRowSkeleton key={i} />
+          ))}
         </View>
       ) : (
         <FlatList
