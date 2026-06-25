@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { TestimonyCard } from '@/components/testimony-card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
@@ -195,7 +196,18 @@ export default function ExploreScreen() {
             </View>
 
             {trendingLoading ? (
-              <ActivityIndicator color={theme.primary} style={{ paddingVertical: Spacing.four }} />
+              <View style={styles.trendingRow}>
+                {[0, 1, 2].map(i => (
+                  <View key={i} style={[styles.trendCard, { borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: theme.border }]}>
+                    <Skeleton width={180} height={110} borderRadius={0} />
+                    <View style={{ padding: Spacing.two, gap: 6 }}>
+                      <Skeleton width="90%" height={13} borderRadius={6} />
+                      <Skeleton width="60%" height={13} borderRadius={6} />
+                      <Skeleton width={48} height={11} borderRadius={6} />
+                    </View>
+                  </View>
+                ))}
+              </View>
             ) : (
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <View style={styles.trendingRow}>

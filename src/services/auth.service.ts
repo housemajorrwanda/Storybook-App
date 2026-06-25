@@ -37,6 +37,13 @@ export const authService = {
     return data;
   },
 
+  googleLogin: async (googleAccessToken: string): Promise<AuthResponse> => {
+    const { data } = await api.post<AuthResponse>('/auth/google/token', {
+      access_token: googleAccessToken,
+    });
+    return data;
+  },
+
   forgotPassword: async (email: string): Promise<{ message: string }> => {
     const { data } = await api.post<{ message: string }>('/auth/forgot-password', { email });
     return data;
