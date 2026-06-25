@@ -1,16 +1,16 @@
-import { useEffect, useState } from 'react';
-import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useEffect, useState } from "react";
+import { FlatList, RefreshControl, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { EmptyState } from '@/components/ui/empty-state';
-import { ScreenHeader } from '@/components/ui/screen-header';
-import { TestimonyCard } from '@/components/testimony-card';
-import { TestimonyCardSkeleton } from '@/components/testimony-card-skeleton';
-import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
-import { testimonyService } from '@/services/testimony.service';
-import type { Testimony } from '@/types/testimony';
+import { EmptyState } from "@/components/ui/empty-state";
+import { ScreenHeader } from "@/components/ui/screen-header";
+import { TestimonyCard } from "@/components/testimony-card";
+import { TestimonyCardSkeleton } from "@/components/testimony-card-skeleton";
+import { ThemedView } from "@/components/themed-view";
+import { Spacing } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
+import { testimonyService } from "@/services/testimony.service";
+import type { Testimony } from "@/types/testimony";
 
 export default function BookmarksScreen() {
   const theme = useTheme();
@@ -45,14 +45,19 @@ export default function BookmarksScreen() {
 
       {loading ? (
         <View style={[styles.list]}>
-          {[0, 1, 2].map(i => <TestimonyCardSkeleton key={i} />)}
+          {[0, 1, 2].map((i) => (
+            <TestimonyCardSkeleton key={i} />
+          ))}
         </View>
       ) : (
         <FlatList
           data={bookmarks}
-          keyExtractor={t => String(t.id)}
+          keyExtractor={(t) => String(t.id)}
           renderItem={({ item }) => <TestimonyCard testimony={item} />}
-          contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + Spacing.six }]}
+          contentContainerStyle={[
+            styles.list,
+            { paddingBottom: insets.bottom + Spacing.six },
+          ]}
           ListEmptyComponent={
             <EmptyState
               icon="bookmark"
@@ -61,7 +66,11 @@ export default function BookmarksScreen() {
             />
           }
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={theme.primary} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={refresh}
+              tintColor={theme.primary}
+            />
           }
           showsVerticalScrollIndicator={false}
         />
@@ -72,6 +81,6 @@ export default function BookmarksScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  center: { flex: 1, alignItems: "center", justifyContent: "center" },
   list: { padding: Spacing.three },
 });
