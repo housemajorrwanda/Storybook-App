@@ -1,9 +1,9 @@
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+
+import { Skeleton } from '@/components/ui/skeleton';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -54,6 +56,8 @@ export default function TestimonyDetailScreen() {
   const [testimony, setTestimony] = useState<Testimony | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [bookmarked, setBookmarked] = useState(false);
+  const [bookmarking, setBookmarking] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -63,6 +67,24 @@ export default function TestimonyDetailScreen() {
       .catch(() => setError('Failed to load testimony.'))
       .finally(() => setLoading(false));
   }, [id]);
+
+  async function toggleBookmark() {
+    if (!testimony || bookmarking) return;
+    setBookmarking(true);
+    const wasBookmarked = bookmarked;
+    setBookmarked(!wasBookmarked);
+    try {
+      if (wasBookmarked) {
+        await testimonyService.removeBookmark(testimony.id);
+      } else {
+        await testimonyService.addBookmark(testimony.id);
+      }
+    } catch {
+      setBookmarked(wasBookmarked);
+    } finally {
+      setBookmarking(false);
+    }
+  }
 
   const coverImage = testimony?.images?.[0]?.imageUrl;
   const authorName =
@@ -77,24 +99,53 @@ export default function TestimonyDetailScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      {/* Fixed back button */}
-      <View
-        style={[
-          styles.backBar,
-          { paddingTop: insets.top + 8, paddingBottom: 8 },
-        ]}>
+      {/* Fixed top bar */}
+      <View style={[styles.backBar, { paddingTop: insets.top + 8, paddingBottom: 8 }]}>
         <Pressable
           style={[styles.backBtn, { backgroundColor: theme.card, borderColor: theme.border }]}
           onPress={() => router.back()}>
           <SymbolView name="chevron.left" size={16} tintColor={theme.foreground} />
           <ThemedText style={styles.backText}>Back</ThemedText>
         </Pressable>
+
+        {testimony && (
+          <Pressable
+            style={[styles.bookmarkBtn, { backgroundColor: theme.card, borderColor: theme.border }]}
+            onPress={toggleBookmark}
+            disabled={bookmarking}>
+            <SymbolView
+              name={bookmarked ? 'bookmark.fill' : 'bookmark'}
+              size={16}
+              tintColor={bookmarked ? theme.primary : theme.foreground}
+            />
+          </Pressable>
+        )}
       </View>
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={theme.primary} size="large" />
-        </View>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <Skeleton height={300} borderRadius={0} />
+          <View style={[styles.skeletonBody, { paddingTop: insets.top + 68 }]}>
+            <Skeleton width={100} height={28} borderRadius={20} />
+            <Skeleton width="80%" height={28} borderRadius={8} />
+            <Skeleton width="55%" height={28} borderRadius={8} />
+            <View style={styles.skeletonAuthorRow}>
+              <Skeleton width={36} height={36} borderRadius={18} />
+              <View style={{ flex: 1, gap: 6 }}>
+                <Skeleton width="40%" height={14} borderRadius={6} />
+                <Skeleton width="25%" height={12} borderRadius={6} />
+              </View>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+              {[80, 110, 72].map((w, i) => <Skeleton key={i} width={w} height={28} borderRadius={14} />)}
+            </View>
+            <Skeleton height={StyleSheet.hairlineWidth * 2} borderRadius={0} />
+            <Skeleton width="35%" height={16} borderRadius={6} />
+            {[100, 90, 100, 70, 85].map((p, i) => (
+              <Skeleton key={i} width={`${p}%`} height={14} borderRadius={6} />
+            ))}
+          </View>
+        </ScrollView>
       ) : error || !testimony ? (
         <View style={styles.center}>
           <ThemedText themeColor="textSecondary">{error || 'Testimony not found.'}</ThemedText>
@@ -105,15 +156,18 @@ export default function TestimonyDetailScreen() {
           contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.six }}>
           {/* Hero image */}
           {coverImage ? (
-            <Animated.View entering={FadeIn.duration(400)}>
+            <Animated.View entering={FadeIn.duration(400)} style={{ width }}>
               <Image
                 source={{ uri: coverImage }}
                 style={[styles.hero, { width }]}
                 contentFit="cover"
                 transition={300}
               />
-              {/* Gradient-style overlay tint */}
-              <View style={styles.heroOverlay} />
+              <LinearGradient
+                colors={['transparent', 'rgba(0,0,0,0.6)']}
+                style={styles.heroOverlay}
+                pointerEvents="none"
+              />
             </Animated.View>
           ) : (
             <View
@@ -200,7 +254,7 @@ export default function TestimonyDetailScreen() {
             {testimony.submissionType === 'written' && testimony.fullTestimony ? (
               <View style={styles.section}>
                 <ThemedText style={styles.sectionTitle}>Testimony</ThemedText>
-                <ThemedText style={[styles.body16, { lineHeight: 28 }]}>
+                <ThemedText style={[styles.body16, styles.readingText]}>
                   {stripHtml(testimony.fullTestimony)}
                 </ThemedText>
               </View>
@@ -311,11 +365,13 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 10,
     paddingHorizontal: Spacing.four,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   backBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
     gap: 4,
     paddingHorizontal: Spacing.three,
     paddingVertical: 8,
@@ -323,6 +379,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   backText: { fontSize: 14, fontWeight: '500' },
+  bookmarkBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   hero: { height: 300 },
   heroOverlay: {
@@ -330,8 +394,16 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 120,
-    backgroundColor: 'transparent',
+    height: 140,
+  },
+  skeletonBody: {
+    paddingHorizontal: Spacing.four,
+    gap: Spacing.three,
+  },
+  skeletonAuthorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
   },
   heroPlaceholder: { height: 200 },
   body: { padding: Spacing.four, gap: Spacing.three },
@@ -372,6 +444,7 @@ const styles = StyleSheet.create({
   section: { gap: Spacing.two },
   sectionTitle: { fontSize: 15, fontWeight: '600' },
   body16: { fontSize: 15, lineHeight: 24 },
+  readingText: { fontSize: 16, lineHeight: 30, letterSpacing: 0.1 },
   mediaCard: {
     flexDirection: 'row',
     alignItems: 'center',

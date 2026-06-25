@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
+import * as Haptics from 'expo-haptics';
+import { SymbolView } from 'expo-symbols';
 import {
   ActivityIndicator,
   FlatList,
@@ -9,9 +11,12 @@ import {
   TextInput,
   View,
 } from 'react-native';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { TestimonyCard } from '@/components/testimony-card';
+import { TestimonyCardSkeleton } from '@/components/testimony-card-skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
@@ -106,6 +111,7 @@ export default function HomeScreen() {
   }, [search]);
 
   function toggleSearch() {
+    Haptics.selectionAsync();
     setShowSearch(v => {
       if (!v) setTimeout(() => searchRef.current?.focus(), 100);
       else setSearch('');
@@ -146,7 +152,7 @@ export default function HomeScreen() {
                   borderColor: active ? theme.primary : theme.border,
                 },
               ]}
-              onPress={() => setActiveFilter(f.value)}>
+              onPress={() => { Haptics.selectionAsync(); setActiveFilter(f.value); }}>
               <ThemedText
                 style={[
                   styles.chipText,
@@ -174,14 +180,20 @@ export default function HomeScreen() {
         <ThemedText type="subtitle" style={styles.appName}>
           HouseMajor
         </ThemedText>
-        <Pressable onPress={toggleSearch} style={styles.searchBtn}>
-          <ThemedText style={{ fontSize: 20 }}>{showSearch ? '✕' : '🔍'}</ThemedText>
+        <Pressable onPress={toggleSearch} style={styles.searchBtn} hitSlop={8}>
+          <SymbolView
+            name={showSearch ? 'xmark' : 'magnifyingglass'}
+            size={20}
+            tintColor={theme.foreground}
+          />
         </Pressable>
       </View>
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={theme.primary} size="large" />
+        <View style={[styles.list, { paddingTop: Spacing.three }]}>
+          {[0, 1, 2, 3].map(i => (
+            <TestimonyCardSkeleton key={i} featured={i === 0} />
+          ))}
         </View>
       ) : (
         <FlatList
@@ -193,11 +205,11 @@ export default function HomeScreen() {
           contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + Spacing.three }]}
           ListHeaderComponent={ListHeader}
           ListEmptyComponent={
-            <View style={styles.center}>
-              <ThemedText themeColor="textSecondary" style={styles.empty}>
-                No testimonies found.
-              </ThemedText>
-            </View>
+            <EmptyState
+              icon="doc.text.magnifyingglass"
+              title="No testimonies found"
+              description={search ? `No results for "${search}"` : 'Be the first to share a testimony.'}
+            />
           }
           ListFooterComponent={
             loadingMore ? (

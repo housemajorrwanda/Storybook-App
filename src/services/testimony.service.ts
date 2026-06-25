@@ -47,4 +47,22 @@ export const testimonyService = {
     });
     return data;
   },
+
+  getMyTestimonies: async (): Promise<Testimony[]> => {
+    const { data } = await api.get<Testimony[]>('/testimonies/my-testimonies');
+    return data;
+  },
+
+  getBookmarks: async (): Promise<Testimony[]> => {
+    const { data } = await api.get<Testimony[]>('/testimonies/bookmarks');
+    return data;
+  },
+
+  addBookmark: async (id: number): Promise<void> => {
+    await api.post(`/testimonies/${id}/bookmark`);
+  },
+
+  removeBookmark: async (id: number): Promise<void> => {
+    await api.delete(`/testimonies/${id}/bookmark`);
+  },
 };
