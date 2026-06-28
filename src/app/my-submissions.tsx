@@ -16,6 +16,7 @@ import { ScreenHeader } from '@/components/ui/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
+import { useResponsive } from '@/hooks/use-responsive';
 import { useTheme } from '@/hooks/use-theme';
 import { testimonyService } from '@/services/testimony.service';
 import type { Testimony, TestimonyStatus } from '@/types/testimony';
@@ -97,6 +98,7 @@ function SubmissionRow({ testimony }: { testimony: Testimony }) {
 export default function MySubmissionsScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { contentWidth } = useResponsive();
 
   const [testimonies, setTestimonies] = useState<Testimony[]>([]);
   const [loading, setLoading] = useState(true);
@@ -133,7 +135,7 @@ export default function MySubmissionsScreen() {
       <ScreenHeader title="My Submissions" showBack />
 
       {loading ? (
-        <View style={[styles.list]}>
+        <View style={[styles.list, styles.centered, { width: contentWidth }]}>
           {/* Stats row skeleton */}
           <View style={styles.statsRow}>
             {[0, 1, 2, 3].map(i => (
@@ -159,7 +161,11 @@ export default function MySubmissionsScreen() {
           data={testimonies}
           keyExtractor={t => String(t.id)}
           renderItem={({ item }) => <SubmissionRow testimony={item} />}
-          contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + Spacing.six }]}
+          contentContainerStyle={[
+            styles.list,
+            styles.centered,
+            { width: contentWidth, paddingBottom: insets.bottom + Spacing.six },
+          ]}
           ListHeaderComponent={
             testimonies.length > 0 ? (
               <View style={styles.statsRow}>
@@ -198,6 +204,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   list: { padding: Spacing.three, gap: Spacing.two },
+  centered: { alignSelf: 'center', maxWidth: '100%' },
   statsRow: { flexDirection: 'row', gap: Spacing.two, marginBottom: Spacing.two },
   statCard: { flex: 1, borderRadius: 10, padding: Spacing.two, alignItems: 'center', gap: 2 },
   statNum: { fontSize: 20, fontWeight: '700' },

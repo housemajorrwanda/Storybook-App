@@ -542,7 +542,12 @@ const styles = StyleSheet.create({
   topBarTitle: { fontSize: 16, fontWeight: '600' },
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   backText: { fontSize: 14 },
-  scrollContent: { paddingHorizontal: Spacing.four },
+  scrollContent: {
+    paddingHorizontal: Spacing.four,
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
+  },
   stepBody: { paddingTop: Spacing.four, gap: Spacing.four },
   stepTitle: { fontSize: 22, fontWeight: '700' },
   stepSubtitle: { fontSize: 14, lineHeight: 20, marginTop: -Spacing.two },
@@ -609,6 +614,9 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     height: 52,
     borderRadius: 14,
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
   },
   primaryBtnText: { fontSize: 16, fontWeight: '600' },
   doneState: {
