@@ -21,6 +21,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { testimonyService } from '@/services/testimony.service';
+import { useResponsive } from '@/hooks/use-responsive';
 import { useTheme } from '@/hooks/use-theme';
 import type { Testimony, SubmissionType, TestimonyFilters } from '@/types/testimony';
 
@@ -34,6 +35,7 @@ const FILTERS: { label: string; value: SubmissionType | 'all' }[] = [
 export default function HomeScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { contentWidth } = useResponsive();
   const { type: typeParam } = useLocalSearchParams<{ type?: string }>();
 
   const [testimonies, setTestimonies] = useState<Testimony[]>([]);
@@ -190,7 +192,7 @@ export default function HomeScreen() {
       </View>
 
       {loading ? (
-        <View style={[styles.list, { paddingTop: Spacing.three }]}>
+        <View style={[styles.list, styles.centered, { width: contentWidth, paddingTop: Spacing.three }]}>
           {[0, 1, 2, 3].map(i => (
             <TestimonyCardSkeleton key={i} featured={i === 0} />
           ))}
@@ -202,7 +204,11 @@ export default function HomeScreen() {
           renderItem={({ item, index }) => (
             <TestimonyCard testimony={item} featured={index === 0} />
           )}
-          contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + Spacing.three }]}
+          contentContainerStyle={[
+            styles.list,
+            styles.centered,
+            { width: contentWidth, paddingBottom: insets.bottom + Spacing.three },
+          ]}
           ListHeaderComponent={ListHeader}
           ListEmptyComponent={
             <EmptyState
@@ -248,6 +254,7 @@ const styles = StyleSheet.create({
   appName: { fontSize: 22 },
   searchBtn: { padding: Spacing.one },
   list: { paddingHorizontal: Spacing.three },
+  centered: { alignSelf: 'center', maxWidth: '100%' },
   listHeader: { paddingTop: Spacing.three, paddingBottom: Spacing.two, gap: Spacing.two },
   searchInput: {
     height: 44,

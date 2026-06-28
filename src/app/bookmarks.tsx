@@ -8,6 +8,7 @@ import { TestimonyCard } from "@/components/testimony-card";
 import { TestimonyCardSkeleton } from "@/components/testimony-card-skeleton";
 import { ThemedView } from "@/components/themed-view";
 import { Spacing } from "@/constants/theme";
+import { useResponsive } from "@/hooks/use-responsive";
 import { useTheme } from "@/hooks/use-theme";
 import { testimonyService } from "@/services/testimony.service";
 import type { Testimony } from "@/types/testimony";
@@ -15,6 +16,7 @@ import type { Testimony } from "@/types/testimony";
 export default function BookmarksScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { contentWidth } = useResponsive();
 
   const [bookmarks, setBookmarks] = useState<Testimony[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +46,7 @@ export default function BookmarksScreen() {
       <ScreenHeader title="Bookmarks" showBack />
 
       {loading ? (
-        <View style={[styles.list]}>
+        <View style={[styles.list, styles.centered, { width: contentWidth }]}>
           {[0, 1, 2].map((i) => (
             <TestimonyCardSkeleton key={i} />
           ))}
@@ -56,7 +58,8 @@ export default function BookmarksScreen() {
           renderItem={({ item }) => <TestimonyCard testimony={item} />}
           contentContainerStyle={[
             styles.list,
-            { paddingBottom: insets.bottom + Spacing.six },
+            styles.centered,
+            { width: contentWidth, paddingBottom: insets.bottom + Spacing.six },
           ]}
           ListEmptyComponent={
             <EmptyState
@@ -83,4 +86,5 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   list: { padding: Spacing.three },
+  centered: { alignSelf: "center", maxWidth: "100%" },
 });

@@ -3,13 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-  useWindowDimensions,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
@@ -18,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
+import { useResponsive } from '@/hooks/use-responsive';
 import { useTheme } from '@/hooks/use-theme';
 import { testimonyService } from '@/services/testimony.service';
 import type { Testimony } from '@/types/testimony';
@@ -51,7 +46,8 @@ export default function TestimonyDetailScreen() {
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width, isTablet } = useResponsive();
+  const heroHeight = isTablet ? 420 : 300;
 
   const [testimony, setTestimony] = useState<Testimony | null>(null);
   const [loading, setLoading] = useState(true);
@@ -159,7 +155,7 @@ export default function TestimonyDetailScreen() {
             <Animated.View entering={FadeIn.duration(400)} style={{ width }}>
               <Image
                 source={{ uri: coverImage }}
-                style={[styles.hero, { width }]}
+                style={[styles.hero, { width, height: heroHeight }]}
                 contentFit="cover"
                 transition={300}
               />
@@ -399,6 +395,9 @@ const styles = StyleSheet.create({
   skeletonBody: {
     paddingHorizontal: Spacing.four,
     gap: Spacing.three,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
   },
   skeletonAuthorRow: {
     flexDirection: 'row',
@@ -406,7 +405,13 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   heroPlaceholder: { height: 200 },
-  body: { padding: Spacing.four, gap: Spacing.three },
+  body: {
+    padding: Spacing.four,
+    gap: Spacing.three,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
+  },
   typeBadge: {
     flexDirection: 'row',
     alignItems: 'center',

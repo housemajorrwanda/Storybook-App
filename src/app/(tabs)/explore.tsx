@@ -1,4 +1,6 @@
 import { Image } from 'expo-image';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -158,6 +160,33 @@ export default function ExploreScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.six }}>
 
+          {/* Virtual tours banner */}
+          <Animated.View entering={FadeInDown.duration(400)} style={styles.section}>
+            <Pressable
+              style={({ pressed }) => [styles.tourBanner, { opacity: pressed ? 0.92 : 1 }]}
+              onPress={() => {
+                Haptics.selectionAsync();
+                router.push('/virtual-tour');
+              }}>
+              <LinearGradient
+                colors={['#1f3a5f', '#0a0a0a']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.tourBannerInner}>
+                <View style={styles.tourBannerIcon}>
+                  <SymbolView name="view.3d" size={26} tintColor="#fff" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <ThemedText style={styles.tourBannerTitle}>Virtual Memorial Tours</ThemedText>
+                  <ThemedText style={styles.tourBannerDesc}>
+                    Step inside Rwanda&apos;s memorial sites in immersive 360°
+                  </ThemedText>
+                </View>
+                <SymbolView name="chevron.right" size={16} tintColor="rgba(255,255,255,0.7)" />
+              </LinearGradient>
+            </Pressable>
+          </Animated.View>
+
           {/* Browse by type */}
           <Animated.View entering={FadeInDown.delay(60).duration(400)} style={styles.section}>
             <ThemedText style={styles.sectionTitle}>Browse by Type</ThemedText>
@@ -283,6 +312,23 @@ const styles = StyleSheet.create({
   emptyState: { alignItems: 'center', paddingTop: Spacing.six, gap: Spacing.three },
   emptyText: { textAlign: 'center', fontSize: 15, lineHeight: 22 },
   section: { paddingHorizontal: Spacing.four, paddingTop: Spacing.four, gap: Spacing.three },
+  tourBanner: { borderRadius: 16, overflow: 'hidden' },
+  tourBannerInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    padding: Spacing.three,
+  },
+  tourBannerIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+  tourBannerTitle: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  tourBannerDesc: { fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2, lineHeight: 16 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one },
   sectionTitle: { fontSize: 17, fontWeight: '600' },
   typeGrid: { flexDirection: 'row', gap: Spacing.two },
