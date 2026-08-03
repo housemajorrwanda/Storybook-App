@@ -1,7 +1,6 @@
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
+import Feather from '@expo/vector-icons/Feather';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,24 +15,18 @@ import { useResponsive } from '@/hooks/use-responsive';
 import { useTheme } from '@/hooks/use-theme';
 import { testimonyService } from '@/services/testimony.service';
 import type { Testimony } from '@/types/testimony';
+import { formatCount, formatDateLong, pluralise } from '@/utils/format';
 
 const TYPE_META = {
-  written: { symbol: 'doc.text.fill', label: 'Written Testimony' },
-  audio: { symbol: 'waveform', label: 'Audio Testimony' },
-  video: { symbol: 'video.fill', label: 'Video Testimony' },
+  written: { symbol: 'file-text', label: 'Written Testimony' },
+  audio: { symbol: 'mic', label: 'Audio Testimony' },
+  video: { symbol: 'video', label: 'Video Testimony' },
 };
 
 function stripHtml(html: string) {
   return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/\s{2,}/g, ' ').trim();
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
 
 function formatDuration(seconds: number) {
   const m = Math.floor(seconds / 60);
@@ -100,7 +93,7 @@ export default function TestimonyDetailScreen() {
         <Pressable
           style={[styles.backBtn, { backgroundColor: theme.card, borderColor: theme.border }]}
           onPress={() => router.back()}>
-          <SymbolView name="chevron.left" size={16} tintColor={theme.foreground} />
+          <Feather name="chevron-left" size={16} color={theme.foreground} />
           <ThemedText style={styles.backText}>Back</ThemedText>
         </Pressable>
 
@@ -109,10 +102,10 @@ export default function TestimonyDetailScreen() {
             style={[styles.bookmarkBtn, { backgroundColor: theme.card, borderColor: theme.border }]}
             onPress={toggleBookmark}
             disabled={bookmarking}>
-            <SymbolView
-              name={bookmarked ? 'bookmark.fill' : 'bookmark'}
+            <Feather
+              name={bookmarked ? 'bookmark' : 'bookmark'}
               size={16}
-              tintColor={bookmarked ? theme.primary : theme.foreground}
+              color={bookmarked ? theme.primary : theme.foreground}
             />
           </Pressable>
         )}
@@ -159,11 +152,7 @@ export default function TestimonyDetailScreen() {
                 contentFit="cover"
                 transition={300}
               />
-              <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.6)']}
-                style={styles.heroOverlay}
-                pointerEvents="none"
-              />
+              <View style={styles.heroOverlay} pointerEvents="none" />
             </Animated.View>
           ) : (
             <View
@@ -177,7 +166,7 @@ export default function TestimonyDetailScreen() {
             {/* Type badge */}
             {meta && (
               <View style={[styles.typeBadge, { backgroundColor: theme.secondary }]}>
-                <SymbolView name={meta.symbol as any} size={13} tintColor={theme.mutedForeground} />
+                <Feather name={meta.symbol as any} size={13} color={theme.mutedForeground} />
                 <ThemedText style={[styles.typeLabel, { color: theme.mutedForeground }]}>
                   {meta.label}
                 </ThemedText>
@@ -203,7 +192,7 @@ export default function TestimonyDetailScreen() {
                 ) : null}
               </View>
               <ThemedText themeColor="textSecondary" style={styles.dateMeta}>
-                {formatDate(testimony.createdAt)}
+                {formatDateLong(testimony.createdAt)}
               </ThemedText>
             </View>
 
@@ -211,7 +200,7 @@ export default function TestimonyDetailScreen() {
             <View style={styles.chips}>
               {testimony.location ? (
                 <View style={[styles.chip, { backgroundColor: theme.secondary }]}>
-                  <SymbolView name="mappin.circle" size={12} tintColor={theme.mutedForeground} />
+                  <Feather name="map-pin" size={12} color={theme.mutedForeground} />
                   <ThemedText style={[styles.chipText, { color: theme.mutedForeground }]}>
                     {testimony.location}
                   </ThemedText>
@@ -219,17 +208,17 @@ export default function TestimonyDetailScreen() {
               ) : null}
               {testimony.dateOfEventFrom ? (
                 <View style={[styles.chip, { backgroundColor: theme.secondary }]}>
-                  <SymbolView name="calendar" size={12} tintColor={theme.mutedForeground} />
+                  <Feather name="calendar" size={12} color={theme.mutedForeground} />
                   <ThemedText style={[styles.chipText, { color: theme.mutedForeground }]}>
-                    {formatDate(testimony.dateOfEventFrom)}
-                    {testimony.dateOfEventTo ? ` – ${formatDate(testimony.dateOfEventTo)}` : ''}
+                    {formatDateLong(testimony.dateOfEventFrom)}
+                    {testimony.dateOfEventTo ? ` – ${formatDateLong(testimony.dateOfEventTo)}` : ''}
                   </ThemedText>
                 </View>
               ) : null}
               <View style={[styles.chip, { backgroundColor: theme.secondary }]}>
-                <SymbolView name="eye" size={12} tintColor={theme.mutedForeground} />
+                <Feather name="eye" size={12} color={theme.mutedForeground} />
                 <ThemedText style={[styles.chipText, { color: theme.mutedForeground }]}>
-                  {testimony.impressions.toLocaleString()} views
+                  {formatCount(testimony.impressions)} {pluralise(testimony.impressions, 'view')}
                 </ThemedText>
               </View>
             </View>
@@ -259,7 +248,7 @@ export default function TestimonyDetailScreen() {
             {/* Audio info */}
             {testimony.submissionType === 'audio' && testimony.audioDuration ? (
               <View style={[styles.mediaCard, { backgroundColor: theme.secondary, borderColor: theme.border }]}>
-                <SymbolView name="waveform.circle.fill" size={36} tintColor={theme.primary} />
+                <Feather name="mic" size={36} color={theme.primary} />
                 <View style={{ flex: 1 }}>
                   <ThemedText style={styles.mediaTitle}>Audio Recording</ThemedText>
                   <ThemedText themeColor="textSecondary" style={styles.mediaMeta}>
@@ -272,7 +261,7 @@ export default function TestimonyDetailScreen() {
             {/* Video info */}
             {testimony.submissionType === 'video' && testimony.videoDuration ? (
               <View style={[styles.mediaCard, { backgroundColor: theme.secondary, borderColor: theme.border }]}>
-                <SymbolView name="play.circle.fill" size={36} tintColor={theme.primary} />
+                <Feather name="play-circle" size={36} color={theme.primary} />
                 <View style={{ flex: 1 }}>
                   <ThemedText style={styles.mediaTitle}>Video Recording</ThemedText>
                   <ThemedText themeColor="textSecondary" style={styles.mediaMeta}>
@@ -391,6 +380,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 140,
+    backgroundColor: 'rgba(0,0,0,0.45)',
   },
   skeletonBody: {
     paddingHorizontal: Spacing.four,

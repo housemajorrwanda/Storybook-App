@@ -1,4 +1,4 @@
-import { SymbolView } from 'expo-symbols';
+import Feather from '@expo/vector-icons/Feather';
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -47,7 +47,7 @@ export function ScreenHeader({
             onPress={handleBack}
             style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.6 : 1 }]}
             hitSlop={8}>
-            <SymbolView name="chevron.left" size={18} tintColor={theme.foreground} />
+            <Feather name="chevron-left" size={18} color={theme.foreground} />
           </Pressable>
         )}
       </View>
@@ -71,7 +71,7 @@ export function ScreenHeader({
             onPress={rightAction.onPress}
             style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.6 : 1 }]}
             hitSlop={8}>
-            <SymbolView name={rightAction.icon as any} size={18} tintColor={theme.foreground} />
+            <Feather name={rightAction.icon as any} size={18} color={theme.foreground} />
           </Pressable>
         )}
       </View>

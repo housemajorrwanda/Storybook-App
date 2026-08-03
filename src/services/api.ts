@@ -3,6 +3,25 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
 export const API_BASE_URL = 'https://storybook-api-production.up.railway.app';
+
+type Paginated<T> = { data: T[]; meta?: unknown };
+
+/**
+ * Normalises a list response to an array.
+ *
+ * Several endpoints documented as returning a bare array actually return the
+ * paginated `{ data, meta }` envelope — `/testimonies/my-testimonies` delegates
+ * to the backend's `findAll`, for example. Screens then call `.filter()` on an
+ * object and crash. Every list-returning service method should pass its payload
+ * through this so a shape change can never reach a component.
+ */
+export function toArray<T>(payload: T[] | Paginated<T> | null | undefined): T[] {
+  if (Array.isArray(payload)) return payload;
+  if (payload && Array.isArray((payload as Paginated<T>).data)) {
+    return (payload as Paginated<T>).data;
+  }
+  return [];
+}
 const TOKEN_KEY = 'housemajor_auth_token';
 
 export async function getToken(): Promise<string | null> {
@@ -48,10 +67,30 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+/**
+ * Endpoints that legitimately answer 401 for bad input rather than an expired
+ * session. A failed sign-in must surface the server's own message and must not
+ * clear the token — the user isn't signed in yet, so there is no session to end.
+ */
+const CREDENTIAL_ENDPOINTS = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/google/token',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+];
+
+function isCredentialRequest(url?: string): boolean {
+  if (!url) return false;
+  return CREDENTIAL_ENDPOINTS.some((endpoint) => url.includes(endpoint));
+}
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error?.response?.status === 401) {
+    const status = error?.response?.status;
+
+    if (status === 401 && !isCredentialRequest(error?.config?.url)) {
       await removeToken();
       _onUnauthorized?.();
       return Promise.reject(new Error('Session expired. Please sign in again.'));

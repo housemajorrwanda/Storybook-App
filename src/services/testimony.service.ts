@@ -1,4 +1,4 @@
-import api from './api';
+import api, { toArray } from './api';
 import type {
   Testimony,
   TestimoniesResponse,
@@ -7,6 +7,7 @@ import type {
 } from '@/types/testimony';
 
 const FEED_LIMIT = 10;
+
 
 export const testimonyService = {
   getTestimonies: async (filters: TestimonyFilters = {}): Promise<TestimoniesResponse> => {
@@ -24,10 +25,11 @@ export const testimonyService = {
   },
 
   getTrending: async (limit = 5): Promise<TrendingTestimony[]> => {
-    const { data } = await api.get<TrendingTestimony[]>('/testimonies/trending', {
-      params: { limit },
-    });
-    return data;
+    const { data } = await api.get<TrendingTestimony[] | { data: TrendingTestimony[] }>(
+      '/testimonies/trending',
+      { params: { limit } },
+    );
+    return toArray(data);
   },
 
   getById: async (id: number): Promise<Testimony> => {
@@ -49,13 +51,15 @@ export const testimonyService = {
   },
 
   getMyTestimonies: async (): Promise<Testimony[]> => {
-    const { data } = await api.get<Testimony[]>('/testimonies/my-testimonies');
-    return data;
+    const { data } = await api.get<Testimony[] | { data: Testimony[] }>(
+      '/testimonies/my-testimonies',
+    );
+    return toArray(data);
   },
 
   getBookmarks: async (): Promise<Testimony[]> => {
-    const { data } = await api.get<Testimony[]>('/testimonies/bookmarks');
-    return data;
+    const { data } = await api.get<Testimony[] | { data: Testimony[] }>('/testimonies/bookmarks');
+    return toArray(data);
   },
 
   addBookmark: async (id: number): Promise<void> => {

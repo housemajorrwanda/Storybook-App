@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { SymbolView } from 'expo-symbols';
+import Feather from '@expo/vector-icons/Feather';
 import {
   ActivityIndicator,
   FlatList,
   Pressable,
   RefreshControl,
   StyleSheet,
-  TextInput,
   View,
 } from 'react-native';
 
@@ -16,13 +15,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { TestimonyCard } from '@/components/testimony-card';
 import { TestimonyCardSkeleton } from '@/components/testimony-card-skeleton';
-import { EmptyState } from '@/components/ui/empty-state';
+import { AppTopBar } from '@/components/ui/app-top-bar';
+import { EmptyState } from '@/components/ui/state-views';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { BottomTabInset, Spacing } from '@/constants/theme';
 import { testimonyService } from '@/services/testimony.service';
 import { useResponsive } from '@/hooks/use-responsive';
 import { useTheme } from '@/hooks/use-theme';
+import { formatCount, pluralise } from '@/utils/format';
 import type { Testimony, SubmissionType, TestimonyFilters } from '@/types/testimony';
 
 const FILTERS: { label: string; value: SubmissionType | 'all' }[] = [
@@ -49,9 +50,7 @@ export default function HomeScreen() {
   const [activeFilter, setActiveFilter] = useState<SubmissionType | 'all'>(
     (typeParam as SubmissionType) ?? 'all',
   );
-  const [showSearch, setShowSearch] = useState(false);
 
-  const searchRef = useRef<TextInput>(null);
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skipRef = useRef(0);
 
@@ -112,34 +111,9 @@ export default function HomeScreen() {
     };
   }, [search]);
 
-  function toggleSearch() {
-    Haptics.selectionAsync();
-    setShowSearch(v => {
-      if (!v) setTimeout(() => searchRef.current?.focus(), 100);
-      else setSearch('');
-      return !v;
-    });
-  }
 
   const ListHeader = (
     <View style={styles.listHeader}>
-      {/* Search bar */}
-      {showSearch && (
-        <TextInput
-          ref={searchRef}
-          style={[
-            styles.searchInput,
-            { borderColor: theme.border, backgroundColor: theme.card, color: theme.foreground },
-          ]}
-          placeholder="Search testimonies…"
-          placeholderTextColor={theme.mutedForeground}
-          value={search}
-          onChangeText={setSearch}
-          returnKeyType="search"
-          autoCapitalize="none"
-        />
-      )}
-
       {/* Filter chips */}
       <View style={styles.filters}>
         {FILTERS.map(f => {
@@ -150,15 +124,20 @@ export default function HomeScreen() {
               style={[
                 styles.chip,
                 {
-                  backgroundColor: active ? theme.primary : theme.secondary,
-                  borderColor: active ? theme.primary : theme.border,
+                  // Selection is marked by the amber border and a raised surface,
+                  // not a solid fill: a filled pill out-shouts the testimony cards,
+                  // and solid amber is reserved for the primary action. Amber text
+                  // was ruled out — 4.08:1 on this surface fails AA at 13px.
+                  backgroundColor: active ? theme.backgroundSelected : theme.secondary,
+                  borderColor: active ? theme.brand : theme.border,
                 },
               ]}
               onPress={() => { Haptics.selectionAsync(); setActiveFilter(f.value); }}>
               <ThemedText
                 style={[
                   styles.chipText,
-                  { color: active ? theme.primaryForeground : theme.mutedForeground },
+                  active && styles.chipTextActive,
+                  { color: active ? theme.foreground : theme.mutedForeground },
                 ]}>
                 {f.label}
               </ThemedText>
@@ -169,7 +148,7 @@ export default function HomeScreen() {
 
       {!loading && (
         <ThemedText themeColor="textSecondary" style={styles.count}>
-          {total.toLocaleString()} {total === 1 ? 'testimony' : 'testimonies'}
+          {formatCount(total)} {pluralise(total, 'testimony', 'testimonies')}
         </ThemedText>
       )}
     </View>
@@ -177,19 +156,11 @@ export default function HomeScreen() {
 
   return (
     <ThemedView style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Top bar */}
-      <View style={[styles.topBar, { borderBottomColor: theme.border }]}>
-        <ThemedText type="subtitle" style={styles.appName}>
-          HouseMajor
-        </ThemedText>
-        <Pressable onPress={toggleSearch} style={styles.searchBtn} hitSlop={8}>
-          <SymbolView
-            name={showSearch ? 'xmark' : 'magnifyingglass'}
-            size={20}
-            tintColor={theme.foreground}
-          />
-        </Pressable>
-      </View>
+      <AppTopBar
+        title="StoryBook"
+        searchPlaceholder="Search testimonies…"
+        onQueryChange={setSearch}
+      />
 
       {loading ? (
         <View style={[styles.list, styles.centered, { width: contentWidth, paddingTop: Spacing.three }]}>
@@ -207,12 +178,12 @@ export default function HomeScreen() {
           contentContainerStyle={[
             styles.list,
             styles.centered,
-            { width: contentWidth, paddingBottom: insets.bottom + Spacing.three },
+            { width: contentWidth, paddingBottom: insets.bottom + BottomTabInset + Spacing.three },
           ]}
           ListHeaderComponent={ListHeader}
           ListEmptyComponent={
             <EmptyState
-              icon="doc.text.magnifyingglass"
+              icon="file-text"
               title="No testimonies found"
               description={search ? `No results for "${search}"` : 'Be the first to share a testimony.'}
             />
@@ -243,26 +214,9 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.three,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  appName: { fontSize: 22 },
-  searchBtn: { padding: Spacing.one },
   list: { paddingHorizontal: Spacing.three },
   centered: { alignSelf: 'center', maxWidth: '100%' },
   listHeader: { paddingTop: Spacing.three, paddingBottom: Spacing.two, gap: Spacing.two },
-  searchInput: {
-    height: 44,
-    borderWidth: 1.5,
-    borderRadius: 10,
-    paddingHorizontal: Spacing.three,
-    fontSize: 15,
-  },
   filters: { flexDirection: 'row', gap: Spacing.two, flexWrap: 'wrap' },
   chip: {
     paddingHorizontal: Spacing.three,
@@ -271,6 +225,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   chipText: { fontSize: 13, fontWeight: '500' },
+  chipTextActive: { fontWeight: '600' },
   count: { fontSize: 12 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: Spacing.six },
   empty: { textAlign: 'center', fontSize: 15 },

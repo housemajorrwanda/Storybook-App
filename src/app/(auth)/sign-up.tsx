@@ -1,6 +1,7 @@
 import { Link } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -13,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/ui/app-button';
 import { AppInput } from '@/components/ui/app-input';
+import { useToast } from '@/components/ui/toast';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth';
@@ -20,6 +22,7 @@ import { useTheme } from '@/hooks/use-theme';
 
 export default function SignUpScreen() {
   const theme = useTheme();
+  const toast = useToast();
   const { signUp } = useAuth();
 
   const emailRef = useRef<TextInput>(null);
@@ -33,29 +36,30 @@ export default function SignUpScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  
 
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/;
 
   async function handleSignUp() {
     if (!fullName.trim() || !email.trim() || !password || !confirm) {
-      setError('Please fill in all fields.');
+      toast.error('Please fill in all fields.');
       return;
     }
     if (password !== confirm) {
-      setError('Passwords do not match.');
+      toast.error('Passwords do not match.');
       return;
     }
     if (password.length < 8 || !passwordRegex.test(password)) {
-      setError('Password must be 8+ characters with uppercase, lowercase, number, and special character (@$!%*?&).');
+      toast.error('Password must be 8+ characters with uppercase, lowercase, number, and special character (@$!%*?&).');
       return;
     }
-    setError('');
+    
     setLoading(true);
     try {
       await signUp(fullName.trim(), email.trim(), password);
+      toast.success('Account created. Welcome to StoryBook.');
     } catch (e: any) {
-      setError(e?.message ?? 'Failed to create account. Please try again.');
+      toast.error(e?.message ?? 'Failed to create account. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -72,14 +76,18 @@ export default function SignUpScreen() {
 
             {/* Branding */}
             <Animated.View entering={FadeInDown.duration(500).springify()} style={styles.brand}>
-              <View style={[styles.monogram, { backgroundColor: theme.primary }]}>
-                <ThemedText style={[styles.monogramText, { color: theme.primaryForeground }]}>
-                  HM
-                </ThemedText>
+              <View style={[styles.logoRing, { borderColor: theme.border, backgroundColor: theme.card }]}>
+                <Image
+                  source={require('@/assets/images/icon.png')}
+                  style={styles.logo}
+                  resizeMode="cover"
+                />
               </View>
-              <ThemedText type="subtitle" style={styles.center}>Create account</ThemedText>
-              <ThemedText themeColor="textSecondary" style={styles.center}>
-                Join HouseMajor. It's free.
+              <ThemedText type="title" style={styles.center}>
+                Create account
+              </ThemedText>
+              <ThemedText themeColor="textSecondary" style={[styles.center, styles.subtitle]}>
+                Join StoryBook and help preserve testimonies
               </ThemedText>
             </Animated.View>
 
@@ -93,7 +101,7 @@ export default function SignUpScreen() {
                 autoComplete="name"
                 autoCapitalize="words"
                 returnKeyType="next"
-                iconLeft="person"
+                iconLeft="user"
                 onSubmitEditing={() => emailRef.current?.focus()}
               />
 
@@ -106,7 +114,7 @@ export default function SignUpScreen() {
                 keyboardType="email-address"
                 autoComplete="email"
                 returnKeyType="next"
-                iconLeft="envelope"
+                iconLeft="mail"
                 onSubmitEditing={() => passwordRef.current?.focus()}
                 ref={emailRef}
               />
@@ -120,7 +128,7 @@ export default function SignUpScreen() {
                 autoComplete="new-password"
                 returnKeyType="next"
                 iconLeft="lock"
-                iconRight={showPassword ? 'eye.slash' : 'eye'}
+                iconRight={showPassword ? 'eye-off' : 'eye'}
                 onIconRightPress={() => setShowPassword(v => !v)}
                 hint="8+ chars, uppercase, lowercase, number, special char"
                 onSubmitEditing={() => confirmRef.current?.focus()}
@@ -134,18 +142,12 @@ export default function SignUpScreen() {
                 onChangeText={setConfirm}
                 secureTextEntry={!showConfirm}
                 returnKeyType="done"
-                iconLeft="lock.fill"
-                iconRight={showConfirm ? 'eye.slash' : 'eye'}
+                iconLeft="lock"
+                iconRight={showConfirm ? 'eye-off' : 'eye'}
                 onIconRightPress={() => setShowConfirm(v => !v)}
                 onSubmitEditing={handleSignUp}
                 ref={confirmRef}
               />
-
-              {error ? (
-                <View style={[styles.errorBox, { backgroundColor: theme.destructive + '18', borderColor: theme.destructive + '40' }]}>
-                  <ThemedText style={{ color: theme.destructive, fontSize: 14 }}>{error}</ThemedText>
-                </View>
-              ) : null}
 
               <AppButton label="Create account" onPress={handleSignUp} loading={loading} size="lg" />
             </Animated.View>
@@ -171,24 +173,26 @@ const styles = StyleSheet.create({
   inner: {
     flex: 1,
     width: '100%',
-    maxWidth: 420,
+    maxWidth: 400,
     paddingHorizontal: Spacing.four,
     justifyContent: 'center',
     gap: Spacing.five,
     paddingVertical: Spacing.six,
   },
   brand: { alignItems: 'center', gap: Spacing.two },
-  monogram: {
-    width: 60,
-    height: 60,
-    borderRadius: 18,
+  subtitle: { maxWidth: 280, lineHeight: 20, fontSize: 14 },
+  logoRing: {
+    width: 72,
+    height: 72,
+    borderRadius: 22,
+    borderWidth: 1,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.two,
+    marginBottom: Spacing.three,
   },
-  monogramText: { fontSize: 22, fontWeight: '700', letterSpacing: 1 },
+  logo: { width: '100%', height: '100%' },
   center: { textAlign: 'center' },
   form: { gap: Spacing.three },
-  errorBox: { borderWidth: 1, borderRadius: 8, padding: Spacing.two + 4 },
   footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' },
 });

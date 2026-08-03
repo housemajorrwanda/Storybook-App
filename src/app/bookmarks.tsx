@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { FlatList, RefreshControl, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { EmptyState } from "@/components/ui/empty-state";
+import { EmptyState } from "@/components/ui/state-views";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { TestimonyCard } from "@/components/testimony-card";
 import { TestimonyCardSkeleton } from "@/components/testimony-card-skeleton";

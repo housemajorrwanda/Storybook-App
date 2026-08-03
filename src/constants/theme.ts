@@ -8,55 +8,76 @@ import '@/global.css';
 import { Platform } from 'react-native';
 
 export const Colors = {
+  /**
+   * Strictly monochrome. Every value is a neutral gray (hue 0, saturation 0), so
+   * nothing in the interface carries colour — including status and error, which
+   * are distinguished by icon and weight instead of hue.
+   */
   light: {
     text: '#000000',
     background: 'hsl(0, 0%, 100%)',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
-    foreground: 'hsl(0, 0%, 3.9%)',
+    backgroundElement: 'hsl(0, 0%, 95%)',
+    backgroundSelected: 'hsl(0, 0%, 89%)',
+    textSecondary: 'hsl(0, 0%, 40%)',
+    foreground: 'hsl(0, 0%, 4%)',
     card: 'hsl(0, 0%, 100%)',
-    cardForeground: 'hsl(0, 0%, 3.9%)',
+    cardForeground: 'hsl(0, 0%, 4%)',
     popover: 'hsl(0, 0%, 100%)',
-    popoverForeground: 'hsl(0, 0%, 3.9%)',
+    popoverForeground: 'hsl(0, 0%, 4%)',
     primary: 'hsl(0, 0%, 9%)',
     primaryForeground: 'hsl(0, 0%, 98%)',
-    secondary: 'hsl(0, 0%, 96.1%)',
+    secondary: 'hsl(0, 0%, 96%)',
     secondaryForeground: 'hsl(0, 0%, 9%)',
-    muted: 'hsl(0, 0%, 96.1%)',
-    mutedForeground: 'hsl(0, 0%, 45.1%)',
-    accent: 'hsl(0, 0%, 96.1%)',
+    muted: 'hsl(0, 0%, 96%)',
+    mutedForeground: 'hsl(0, 0%, 45%)',
+    accent: 'hsl(0, 0%, 94%)',
     accentForeground: 'hsl(0, 0%, 9%)',
-    destructive: 'hsl(0, 84.2%, 60.2%)',
+    destructive: 'hsl(0, 0%, 25%)',
     destructiveForeground: 'hsl(0, 0%, 98%)',
-    border: 'hsl(0, 0%, 89.8%)',
-    input: 'hsl(0, 0%, 89.8%)',
-    ring: 'hsl(0, 0%, 3.9%)',
+    border: 'hsl(0, 0%, 88%)',
+    input: 'hsl(0, 0%, 88%)',
+    ring: '#B0632A',
+    /**
+     * The single accent, sampled from the flame in the app icon. Reserved for
+     * primary actions, focus and active state — never for decoration. Darkened
+     * slightly here so it holds contrast against a white background.
+     */
+    brand: '#B0632A',
+    brandForeground: 'hsl(0, 0%, 100%)',
   },
+  /**
+   * Dark mode is a neutral gray ramp rather than pure black — surfaces step
+   * 7% → 11% → 14% so cards and inputs read as distinct layers instead of
+   * dissolving into the background. White is reserved for primary actions
+   * and headings, keeping the palette dark / gray / white.
+   */
   dark: {
     text: '#ffffff',
-    background: 'hsl(0, 0%, 3.9%)',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    background: 'hsl(0, 0%, 7%)',
+    backgroundElement: 'hsl(0, 0%, 13%)',
+    backgroundSelected: 'hsl(0, 0%, 18%)',
+    textSecondary: 'hsl(0, 0%, 64%)',
     foreground: 'hsl(0, 0%, 98%)',
-    card: 'hsl(0, 0%, 3.9%)',
+    card: 'hsl(0, 0%, 11%)',
     cardForeground: 'hsl(0, 0%, 98%)',
-    popover: 'hsl(0, 0%, 3.9%)',
+    popover: 'hsl(0, 0%, 13%)',
     popoverForeground: 'hsl(0, 0%, 98%)',
     primary: 'hsl(0, 0%, 98%)',
     primaryForeground: 'hsl(0, 0%, 9%)',
-    secondary: 'hsl(0, 0%, 14.9%)',
+    secondary: 'hsl(0, 0%, 16%)',
     secondaryForeground: 'hsl(0, 0%, 98%)',
-    muted: 'hsl(0, 0%, 14.9%)',
-    mutedForeground: 'hsl(0, 0%, 63.9%)',
-    accent: 'hsl(0, 0%, 14.9%)',
+    muted: 'hsl(0, 0%, 16%)',
+    mutedForeground: 'hsl(0, 0%, 64%)',
+    accent: 'hsl(0, 0%, 18%)',
     accentForeground: 'hsl(0, 0%, 98%)',
-    destructive: 'hsl(0, 62.8%, 30.6%)',
-    destructiveForeground: 'hsl(0, 0%, 98%)',
-    border: 'hsl(0, 0%, 14.9%)',
-    input: 'hsl(0, 0%, 14.9%)',
-    ring: 'hsl(0, 0%, 83.1%)',
+    destructive: 'hsl(0, 0%, 82%)',
+    destructiveForeground: 'hsl(0, 0%, 9%)',
+    border: 'hsl(0, 0%, 20%)',
+    input: 'hsl(0, 0%, 18%)',
+    ring: '#CE7734',
+    /** Sampled from the flame in the app icon. Near-black text sits on it. */
+    brand: '#CE7734',
+    brandForeground: 'hsl(0, 0%, 8%)',
   },
 } as const;
 

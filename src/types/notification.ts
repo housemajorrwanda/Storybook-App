@@ -18,4 +18,8 @@ export type AppNotification = {
   updatedAt: string;
 };
 
-export type UnreadCount = { count: number };
+/**
+ * The API answers `/notifications/me/unread-count` with `{ unreadCount }`.
+ * `count` is kept optional so an older or changed response still parses.
+ */
+export type UnreadCount = { unreadCount?: number; count?: number };

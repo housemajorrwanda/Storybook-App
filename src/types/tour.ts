@@ -1,39 +1,79 @@
 /**
- * 360° virtual tour model. A tour is a set of panorama "scenes" (equirectangular
- * images) connected by hotspots the visitor taps to move between them — the same
- * shape Pannellum consumes under the hood.
+ * Mirrors the API's virtual-tour contract (see StoryBook-Backend, and the web
+ * client's src/types/tour.d.ts). A tour is a SINGLE media asset plus hotspots —
+ * not the multi-scene graph the old hardcoded sample data modelled.
  */
 
-export type TourHotspot = {
-  /** Vertical angle in degrees (look up/down) where the hotspot sits. */
-  pitch: number;
-  /** Horizontal angle in degrees (compass) where the hotspot sits. */
-  yaw: number;
-  /** Scene this hotspot navigates to. */
-  targetSceneId: string;
-  /** Label shown on the hotspot, e.g. "Memorial Hall". */
-  label: string;
-};
+export type TourType = '360_image' | '360_video' | '3d_model' | 'embed';
+export type TourStatus = 'draft' | 'published' | 'archived';
 
-export type TourScene = {
-  id: string;
-  /** Human title shown in the native overlay. */
-  title: string;
-  /** Equirectangular (2:1) panorama image URL. */
-  panorama: string;
-  /** Initial horizontal view angle in degrees. */
-  initialYaw?: number;
-  hotspots?: TourHotspot[];
+export type HotspotType = 'info' | 'link' | 'audio' | 'video' | 'image' | 'effect';
+
+export type VirtualTourHotspot = {
+  id: number;
+  virtualTourId: number;
+  /** Vertical angle in degrees (look up/down). */
+  pitch: number | null;
+  /** Horizontal angle in degrees (compass heading). */
+  yaw: number | null;
+  type: HotspotType;
+  title: string | null;
+  description: string | null;
+  icon: string | null;
+  actionUrl: string | null;
+  actionImageUrl: string | null;
+  color: string | null;
+  size: number | null;
+  order: number;
 };
 
 export type VirtualTour = {
-  id: string;
-  name: string;
-  /** Short description of the memorial site. */
+  id: number;
+  title: string;
   description: string;
-  /** Cover image for the tour list (can reuse the first panorama). */
-  cover: string;
   location: string;
-  firstSceneId: string;
-  scenes: TourScene[];
+  tourType: TourType;
+  embedUrl: string | null;
+  image360Url: string | null;
+  video360Url: string | null;
+  model3dUrl: string | null;
+  status: TourStatus;
+  isPublished: boolean;
+  isArchived: boolean;
+  impressions: number;
+  userId: number;
+  createdAt: string;
+  updatedAt: string;
+  user?: { id: number; fullName: string; email: string };
+  hotspots: VirtualTourHotspot[];
+  _count?: { hotspots: number; audioRegions: number; effects: number };
 };
+
+export type VirtualToursResponse = {
+  data: VirtualTour[];
+  meta: { total: number; skip: number; limit: number; hasMore: boolean };
+};
+
+export type VirtualTourFilters = {
+  skip?: number;
+  limit?: number;
+  search?: string;
+  tourType?: TourType;
+  isPublished?: boolean;
+};
+
+/** The media URL a tour should render, whichever type it is. */
+export function tourMediaUrl(tour: VirtualTour): string | null {
+  switch (tour.tourType) {
+    case '360_image':
+      return tour.image360Url;
+    case '360_video':
+      return tour.video360Url;
+    case '3d_model':
+      return tour.model3dUrl;
+    case 'embed':
+      return tour.embedUrl;
+    default:
+      return null;
+  }
+}
