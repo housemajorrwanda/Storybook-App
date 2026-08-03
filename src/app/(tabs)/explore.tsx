@@ -1,8 +1,7 @@
+import Feather from '@expo/vector-icons/Feather';
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -10,25 +9,27 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, FadeOut } from 'react-native-reanimated';
 
+import { FeatureBanner } from '@/components/ui/feature-banner';
+import { AppTopBar } from '@/components/ui/app-top-bar';
 import { TestimonyCard } from '@/components/testimony-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { testimonyService } from '@/services/testimony.service';
+import { formatCount } from '@/utils/format';
 import type { SubmissionType, Testimony, TrendingTestimony } from '@/types/testimony';
 
 const TYPE_OPTIONS: { type: SubmissionType; symbol: string; label: string; desc: string }[] = [
-  { type: 'written', symbol: 'doc.text.fill', label: 'Written', desc: 'Text testimonies' },
-  { type: 'audio', symbol: 'waveform', label: 'Audio', desc: 'Voice recordings' },
-  { type: 'video', symbol: 'video.fill', label: 'Video', desc: 'Video testimonies' },
+  { type: 'written', symbol: 'file-text', label: 'Written', desc: 'Text testimonies' },
+  { type: 'audio', symbol: 'mic', label: 'Audio', desc: 'Voice recordings' },
+  { type: 'video', symbol: 'video', label: 'Video', desc: 'Video testimonies' },
 ];
 
 export default function ExploreScreen() {
@@ -44,7 +45,6 @@ export default function ExploreScreen() {
   const [searching, setSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
-  const inputRef = useRef<TextInput>(null);
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -78,55 +78,18 @@ export default function ExploreScreen() {
     debounce.current = setTimeout(() => runSearch(text), 450);
   }
 
-  function clearSearch() {
-    setQuery('');
-    setResults([]);
-    setHasSearched(false);
-    inputRef.current?.focus();
-  }
+
 
   const isSearchMode = focused || query.length > 0;
 
   return (
     <ThemedView style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: theme.border }]}>
-        <ThemedText type="subtitle" style={styles.headerTitle}>
-          Explore
-        </ThemedText>
-      </View>
-
-      {/* Search bar */}
-      <View style={[styles.searchRow, { borderBottomColor: theme.border }]}>
-        <View
-          style={[
-            styles.searchBox,
-            {
-              backgroundColor: theme.secondary,
-              borderColor: focused ? theme.ring : theme.border,
-            },
-          ]}>
-          <SymbolView name="magnifyingglass" size={16} tintColor={theme.mutedForeground} />
-          <TextInput
-            ref={inputRef}
-            style={[styles.searchInput, { color: theme.foreground }]}
-            placeholder="Search testimonies…"
-            placeholderTextColor={theme.mutedForeground}
-            value={query}
-            onChangeText={onChangeText}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            returnKeyType="search"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          {query.length > 0 && (
-            <Pressable onPress={clearSearch} hitSlop={8}>
-              <SymbolView name="xmark.circle.fill" size={16} tintColor={theme.mutedForeground} />
-            </Pressable>
-          )}
-        </View>
-      </View>
+      <AppTopBar
+        title="Explore"
+        searchPlaceholder="Search testimonies…"
+        onQueryChange={onChangeText}
+        onSearchOpenChange={setFocused}
+      />
 
       {isSearchMode && hasSearched ? (
         /* Search results */
@@ -134,7 +97,7 @@ export default function ExploreScreen() {
           data={results}
           keyExtractor={t => String(t.id)}
           renderItem={({ item }) => <TestimonyCard testimony={item} />}
-          contentContainerStyle={[styles.resultsList, { paddingBottom: insets.bottom + Spacing.six }]}
+          contentContainerStyle={[styles.resultsList, { paddingBottom: insets.bottom + BottomTabInset + Spacing.six }]}
           ListHeaderComponent={
             <ThemedText themeColor="textSecondary" style={styles.resultsLabel}>
               {searching ? 'Searching…' : `${results.length} result${results.length !== 1 ? 's' : ''} for "${query}"`}
@@ -145,7 +108,7 @@ export default function ExploreScreen() {
               <ActivityIndicator color={theme.primary} style={{ marginTop: Spacing.six }} />
             ) : (
               <View style={styles.emptyState}>
-                <SymbolView name="magnifyingglass" size={40} tintColor={theme.mutedForeground} />
+                <Feather name="search" size={40} color={theme.mutedForeground} />
                 <ThemedText themeColor="textSecondary" style={styles.emptyText}>
                   No testimonies found{'\n'}for "{query}"
                 </ThemedText>
@@ -158,34 +121,20 @@ export default function ExploreScreen() {
         /* Discovery content */
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.six }}>
+          contentContainerStyle={{ paddingBottom: insets.bottom + BottomTabInset + Spacing.six }}>
 
-          {/* Virtual tours banner */}
-          <Animated.View entering={FadeInDown.duration(400)} style={styles.section}>
-            <Pressable
-              style={({ pressed }) => [styles.tourBanner, { opacity: pressed ? 0.92 : 1 }]}
-              onPress={() => {
-                Haptics.selectionAsync();
-                router.push('/virtual-tour');
-              }}>
-              <LinearGradient
-                colors={['#1f3a5f', '#0a0a0a']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.tourBannerInner}>
-                <View style={styles.tourBannerIcon}>
-                  <SymbolView name="view.3d" size={26} tintColor="#fff" />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <ThemedText style={styles.tourBannerTitle}>Virtual Memorial Tours</ThemedText>
-                  <ThemedText style={styles.tourBannerDesc}>
-                    Step inside Rwanda&apos;s memorial sites in immersive 360°
-                  </ThemedText>
-                </View>
-                <SymbolView name="chevron.right" size={16} tintColor="rgba(255,255,255,0.7)" />
-              </LinearGradient>
-            </Pressable>
-          </Animated.View>
+          {/* Feature entry points. Both use the shared FeatureBanner so surface,
+              border and text all come from the theme and invert in light mode. */}
+          <View style={styles.section}>
+            {/* Virtual Tours moved to its own bottom-tab, so it is no longer
+                duplicated here — one destination, one entry point. */}
+            <FeatureBanner
+              icon="git-merge"
+              title="Family Trees"
+              description="Trace families and the testimonies that remember them"
+              onPress={() => router.push('/family-tree')}
+            />
+          </View>
 
           {/* Browse by type */}
           <Animated.View entering={FadeInDown.delay(60).duration(400)} style={styles.section}>
@@ -206,7 +155,7 @@ export default function ExploreScreen() {
                     router.push({ pathname: '/', params: { type: opt.type } })
                   }>
                   <View style={[styles.typeIconWrap, { backgroundColor: theme.background }]}>
-                    <SymbolView name={opt.symbol as any} size={22} tintColor={theme.foreground} />
+                    <Feather name={opt.symbol as any} size={22} color={theme.foreground} />
                   </View>
                   <ThemedText style={styles.typeLabel}>{opt.label}</ThemedText>
                   <ThemedText themeColor="textSecondary" style={styles.typeDesc}>
@@ -218,10 +167,10 @@ export default function ExploreScreen() {
           </Animated.View>
 
           {/* Trending */}
-          <Animated.View entering={FadeInDown.delay(120).duration(400)} style={styles.section}>
-            <View style={styles.sectionHeader}>
+          <Animated.View entering={FadeInDown.delay(120).duration(400)} style={styles.sectionFlush}>
+            <View style={[styles.sectionHeader, styles.sectionHeaderInset]}>
               <ThemedText style={styles.sectionTitle}>Trending</ThemedText>
-              <SymbolView name="flame.fill" size={14} tintColor={theme.mutedForeground} />
+              <Feather name="trending-up" size={14} color={theme.mutedForeground} />
             </View>
 
             {trendingLoading ? (
@@ -265,9 +214,9 @@ export default function ExploreScreen() {
                             {t.eventTitle}
                           </ThemedText>
                           <View style={styles.trendMeta}>
-                            <SymbolView name="eye" size={11} tintColor={theme.mutedForeground} />
+                            <Feather name="eye" size={11} color={theme.mutedForeground} />
                             <ThemedText themeColor="textSecondary" style={styles.trendMetaText}>
-                              {t.impressions.toLocaleString()}
+                              {formatCount(t.impressions)}
                             </ThemedText>
                           </View>
                         </View>
@@ -286,49 +235,13 @@ export default function ExploreScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.three,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  headerTitle: { fontSize: 22 },
-  searchRow: {
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.two,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    height: 44,
-    borderRadius: 12,
-    borderWidth: 1.5,
-  },
-  searchInput: { flex: 1, fontSize: 15 },
   resultsList: { paddingHorizontal: Spacing.three, paddingTop: Spacing.two },
   resultsLabel: { fontSize: 13, marginBottom: Spacing.two },
   emptyState: { alignItems: 'center', paddingTop: Spacing.six, gap: Spacing.three },
   emptyText: { textAlign: 'center', fontSize: 15, lineHeight: 22 },
   section: { paddingHorizontal: Spacing.four, paddingTop: Spacing.four, gap: Spacing.three },
-  tourBanner: { borderRadius: 16, overflow: 'hidden' },
-  tourBannerInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
-    padding: Spacing.three,
-  },
-  tourBannerIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-  },
-  tourBannerTitle: { fontSize: 16, fontWeight: '700', color: '#fff' },
-  tourBannerDesc: { fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2, lineHeight: 16 },
+  sectionFlush: { paddingTop: Spacing.four, gap: Spacing.three },
+  sectionHeaderInset: { paddingHorizontal: Spacing.four },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one },
   sectionTitle: { fontSize: 17, fontWeight: '600' },
   typeGrid: { flexDirection: 'row', gap: Spacing.two },
@@ -350,7 +263,9 @@ const styles = StyleSheet.create({
   },
   typeLabel: { fontSize: 13, fontWeight: '600' },
   typeDesc: { fontSize: 11, textAlign: 'center' },
-  trendingRow: { flexDirection: 'row', gap: Spacing.three, paddingLeft: Spacing.four, paddingRight: Spacing.four },
+  // Sole horizontal padding for the carousel — the section around it is flush,
+  // so cards line up with other sections yet scroll past the screen edge.
+  trendingRow: { flexDirection: 'row', gap: Spacing.three, paddingHorizontal: Spacing.four },
   trendCard: { width: 180 },
   trendInner: { borderWidth: 1, borderRadius: 12, overflow: 'hidden' },
   trendImage: { width: '100%', height: 110 },

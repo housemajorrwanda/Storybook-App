@@ -1,10 +1,10 @@
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
+import Feather from '@expo/vector-icons/Feather';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
+import { formatCount, formatDate } from '@/utils/format';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
@@ -12,8 +12,8 @@ import { useTheme } from '@/hooks/use-theme';
 import type { Testimony } from '@/types/testimony';
 
 const TYPE_META = {
-  written: { symbol: 'doc.text', label: 'Written' },
-  audio: { symbol: 'waveform', label: 'Audio' },
+  written: { symbol: 'file-text', label: 'Written' },
+  audio: { symbol: 'mic', label: 'Audio' },
   video: { symbol: 'video', label: 'Video' },
 };
 
@@ -21,18 +21,6 @@ function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
 }
 
-function formatImpressions(n: number): string {
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-  return String(n);
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
 
 type Props = { testimony: Testimony; featured?: boolean };
 
@@ -64,16 +52,12 @@ export function TestimonyCard({ testimony, featured = false }: Props) {
               contentFit="cover"
               transition={200}
             />
-            {/* Bottom gradient so content below is readable */}
-            <LinearGradient
-              colors={['transparent', 'rgba(0,0,0,0.55)']}
-              style={styles.imageGradient}
-              pointerEvents="none"
-            />
+            {/* Flat scrim so the badge stays readable over any image */}
+            <View style={styles.imageGradient} pointerEvents="none" />
             {/* Type badge sits on the image bottom-left */}
             <View style={styles.imageFooter}>
               <View style={styles.imageBadge}>
-                <SymbolView name={meta.symbol as any} size={11} tintColor="#fff" />
+                <Feather name={meta.symbol as any} size={11} color="#fff" />
                 <ThemedText style={styles.imageBadgeText}>{meta.label}</ThemedText>
               </View>
               <ThemedText style={styles.imageDate}>{formatDate(testimony.createdAt)}</ThemedText>
@@ -87,7 +71,7 @@ export function TestimonyCard({ testimony, featured = false }: Props) {
           {!coverImage && (
             <View style={styles.metaRow}>
               <View style={[styles.badge, { backgroundColor: theme.secondary }]}>
-                <SymbolView name={meta.symbol as any} size={11} tintColor={theme.mutedForeground} />
+                <Feather name={meta.symbol as any} size={11} color={theme.mutedForeground} />
                 <ThemedText style={[styles.badgeText, { color: theme.mutedForeground }]}>
                   {meta.label}
                 </ThemedText>
@@ -127,9 +111,9 @@ export function TestimonyCard({ testimony, featured = false }: Props) {
                 </ThemedText>
               ) : null}
               <View style={styles.impressionsRow}>
-                <SymbolView name="eye" size={12} tintColor={theme.mutedForeground} />
+                <Feather name="eye" size={12} color={theme.mutedForeground} />
                 <ThemedText themeColor="textSecondary" style={styles.footerMeta}>
-                  {formatImpressions(testimony.impressions)}
+                  {formatCount(testimony.impressions)}
                 </ThemedText>
               </View>
             </View>
@@ -161,6 +145,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 80,
+    backgroundColor: 'rgba(0,0,0,0.42)',
   },
   imageFooter: {
     position: 'absolute',

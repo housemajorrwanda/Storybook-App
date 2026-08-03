@@ -1,7 +1,7 @@
-import * as Google from 'expo-auth-session/providers/google';
+import { makeRedirectUri } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { Link } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   Image,
   KeyboardAvoidingView,
@@ -11,24 +11,25 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/ui/app-button';
 import { AppInput } from '@/components/ui/app-input';
+import { GoogleIcon } from '@/components/ui/google-icon';
+import { useToast } from '@/components/ui/toast';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/auth';
 import { useTheme } from '@/hooks/use-theme';
+import { authService } from '@/services/auth.service';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const GOOGLE_WEB_CLIENT_ID =
-  '40288313306-oehaba5t529fcqn318ifbih990skck8l.apps.googleusercontent.com';
-
 export default function LoginScreen() {
   const theme = useTheme();
-  const { signIn, signInWithGoogle } = useAuth();
+  const toast = useToast();
+  const { signIn, signInWithToken } = useAuth();
   const passwordRef = useRef<TextInput>(null);
 
   const [email, setEmail] = useState('');
@@ -36,44 +37,57 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId: GOOGLE_WEB_CLIENT_ID,
-  });
-
-  useEffect(() => {
-    if (response?.type === 'success') {
-      const token = response.authentication?.accessToken;
-      if (token) handleGoogleSignIn(token);
-    } else if (response?.type === 'error') {
-      setError(response.error?.message ?? 'Google sign-in failed.');
-    }
-  }, [response]);
 
   async function handleSignIn() {
     if (!email.trim() || !password) {
-      setError('Please fill in all fields.');
+      toast.error('Please fill in all fields.');
       return;
     }
-    setError('');
     setLoading(true);
     try {
       await signIn(email.trim(), password);
+      toast.success('Welcome back.');
     } catch (e: any) {
-      setError(e?.message ?? 'Invalid email or password.');
+      toast.error(e?.message ?? 'Invalid email or password.');
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleGoogleSignIn(token: string) {
+  async function handleGoogleSignIn() {
     setGoogleLoading(true);
-    setError('');
     try {
-      await signInWithGoogle(token);
+      // `makeRedirectUri` resolves to exp://<lan-ip> inside Expo Go and to the
+      // app's own scheme in a build, so the same code path serves both.
+      const redirectUri = makeRedirectUri({ scheme: 'storybookapp', path: 'auth' });
+
+      const result = await WebBrowser.openAuthSessionAsync(
+        authService.googleAuthUrl(redirectUri),
+        redirectUri,
+      );
+
+      if (result.type !== 'success') {
+        // 'cancel' and 'dismiss' are the user backing out — not failures.
+        return;
+      }
+
+      const params = new URL(result.url).searchParams;
+      const errorMessage = params.get('error');
+      if (errorMessage) {
+        toast.error(decodeURIComponent(errorMessage));
+        return;
+      }
+
+      const token = params.get('token');
+      if (!token) {
+        toast.error('Google sign-in did not return a token.');
+        return;
+      }
+
+      await signInWithToken(token);
+      toast.success('Signed in with Google.');
     } catch (e: any) {
-      setError(e?.message ?? 'Google sign-in failed. Try again.');
+      toast.error(e?.message ?? 'Google sign-in failed. Try again.');
     } finally {
       setGoogleLoading(false);
     }
@@ -81,28 +95,34 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.flex}>
         <ScrollView
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
           <View style={styles.inner}>
-
             {/* Branding */}
-            <Animated.View entering={FadeInDown.duration(500).springify()} style={styles.brand}>
-              <View style={[styles.monogram, { backgroundColor: theme.primary }]}>
-                <ThemedText style={[styles.monogramText, { color: theme.primaryForeground }]}>
-                  HM
-                </ThemedText>
+            <Animated.View entering={FadeInDown.duration(600).springify()} style={styles.brand}>
+              <View
+                style={[styles.logoRing, { borderColor: theme.border, backgroundColor: theme.card }]}>
+                <Image
+                  source={require('@/assets/images/icon.png')}
+                  style={styles.logo}
+                  resizeMode="cover"
+                />
               </View>
-              <ThemedText type="subtitle" style={styles.center}>Welcome back</ThemedText>
-              <ThemedText themeColor="textSecondary" style={styles.center}>
-                Sign in to HouseMajor.
+              <ThemedText type="title" style={styles.center}>
+                Welcome back
+              </ThemedText>
+              <ThemedText themeColor="textSecondary" style={[styles.center, styles.subtitle]}>
+                Sign in to continue preserving testimonies
               </ThemedText>
             </Animated.View>
 
             {/* Form */}
-            <Animated.View entering={FadeInUp.delay(120).duration(500).springify()} style={styles.form}>
+            <Animated.View entering={FadeInDown.delay(100).duration(500)} style={styles.form}>
               <AppInput
                 label="Email"
                 placeholder="you@example.com"
@@ -112,7 +132,7 @@ export default function LoginScreen() {
                 keyboardType="email-address"
                 autoComplete="email"
                 returnKeyType="next"
-                iconLeft="envelope"
+                iconLeft="mail"
                 onSubmitEditing={() => passwordRef.current?.focus()}
               />
 
@@ -125,48 +145,50 @@ export default function LoginScreen() {
                 autoComplete="current-password"
                 returnKeyType="done"
                 iconLeft="lock"
-                iconRight={showPassword ? 'eye.slash' : 'eye'}
-                onIconRightPress={() => setShowPassword(v => !v)}
+                iconRight={showPassword ? 'eye-off' : 'eye'}
+                onIconRightPress={() => setShowPassword((v) => !v)}
                 onSubmitEditing={handleSignIn}
                 ref={passwordRef}
               />
 
-              {error ? (
-                <View style={[styles.errorBox, { backgroundColor: theme.destructive + '18', borderColor: theme.destructive + '40' }]}>
-                  <ThemedText style={{ color: theme.destructive, fontSize: 14 }}>{error}</ThemedText>
-                </View>
-              ) : null}
-
-              <Link href="/(auth)/forgot-password" style={{ alignSelf: 'flex-end' }}>
-                <ThemedText type="linkPrimary" style={styles.forgotText}>Forgot password?</ThemedText>
+              <Link href="/(auth)/forgot-password" style={styles.forgotLink}>
+                <ThemedText themeColor="textSecondary" style={styles.forgotText}>
+                  Forgot password?
+                </ThemedText>
               </Link>
 
               <AppButton label="Sign in" onPress={handleSignIn} loading={loading} size="lg" />
+            </Animated.View>
 
-              {/* Divider */}
+            {/* Alternate sign-in */}
+            <Animated.View entering={FadeIn.delay(220).duration(400)} style={styles.alt}>
               <View style={styles.dividerRow}>
                 <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
-                <ThemedText themeColor="textSecondary" style={styles.dividerText}>or</ThemedText>
+                <ThemedText themeColor="textSecondary" style={styles.dividerText}>
+                  or
+                </ThemedText>
                 <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
               </View>
 
-              {/* Google button */}
               <AppButton
                 label="Continue with Google"
-                onPress={() => promptAsync()}
+                onPress={handleGoogleSignIn}
                 loading={googleLoading}
-                disabled={!request}
                 variant="outline"
                 size="lg"
-                iconLeft="globe"
+                iconNode={<GoogleIcon size={18} />}
               />
             </Animated.View>
 
             {/* Footer */}
-            <Animated.View entering={FadeInUp.delay(220).duration(400)} style={styles.footer}>
-              <ThemedText themeColor="textSecondary">Don't have an account? </ThemedText>
+            <Animated.View entering={FadeIn.delay(320).duration(400)} style={styles.footer}>
+              <ThemedText themeColor="textSecondary" style={styles.footerText}>
+                Don&apos;t have an account?{' '}
+              </ThemedText>
               <Link href="/(auth)/sign-up">
-                <ThemedText type="linkPrimary">Sign up</ThemedText>
+                <ThemedText type="linkPrimary" style={styles.footerText}>
+                  Sign up
+                </ThemedText>
               </Link>
             </Animated.View>
           </View>
@@ -183,28 +205,33 @@ const styles = StyleSheet.create({
   inner: {
     flex: 1,
     width: '100%',
-    maxWidth: 420,
+    maxWidth: 400,
     paddingHorizontal: Spacing.four,
     justifyContent: 'center',
     gap: Spacing.five,
     paddingVertical: Spacing.six,
   },
   brand: { alignItems: 'center', gap: Spacing.two },
-  monogram: {
-    width: 60,
-    height: 60,
-    borderRadius: 18,
+  logoRing: {
+    width: 72,
+    height: 72,
+    borderRadius: 22,
+    borderWidth: 1,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.two,
+    marginBottom: Spacing.three,
   },
-  monogramText: { fontSize: 22, fontWeight: '700', letterSpacing: 1 },
+  logo: { width: '100%', height: '100%' },
   center: { textAlign: 'center' },
+  subtitle: { maxWidth: 280, lineHeight: 20, fontSize: 14 },
   form: { gap: Spacing.three },
+  forgotLink: { alignSelf: 'flex-end', marginTop: -Spacing.one },
   forgotText: { fontSize: 13 },
-  errorBox: { borderWidth: 1, borderRadius: 8, padding: Spacing.two + 4 },
-  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  alt: { gap: Spacing.three },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   dividerLine: { flex: 1, height: StyleSheet.hairlineWidth },
-  dividerText: { fontSize: 13 },
+  dividerText: { fontSize: 12 },
   footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' },
+  footerText: { fontSize: 14 },
 });

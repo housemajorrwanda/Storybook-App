@@ -1,50 +1,54 @@
-import { NativeTabs } from "expo-router/unstable-native-tabs";
+
+import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
 import { useColorScheme } from "react-native";
 
 import { Colors } from "@/constants/theme";
 
 export default function AppTabs() {
   const scheme = useColorScheme();
-  const colors = Colors[scheme === "unspecified" ? "light" : scheme];
+  const colors = Colors[scheme === "dark" ? "dark" : "light"];
 
   return (
     <NativeTabs
       backgroundColor={colors.background}
       indicatorColor={colors.backgroundElement}
-      labelStyle={{ selected: { color: colors.text } }}
+      labelStyle={{ selected: { color: colors.brand } }}
+      tintColor={colors.brand}
     >
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
+        <Label>Home</Label>
+        <Icon
           sf={{ default: "house", selected: "house.fill" }}
-          src={require("@/assets/images/tabIcons/home.png")}
-          renderingMode="template"
+          androidSrc={require("@/assets/images/tabIcons/home.png")}
         />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="explore">
-        <NativeTabs.Trigger.Label>Explore</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
+        <Label>Explore</Label>
+        <Icon
           sf={{ default: "safari", selected: "safari.fill" }}
-          src={require("@/assets/images/tabIcons/explore.png")}
-          renderingMode="template"
+          androidSrc={require("@/assets/images/tabIcons/explore.png")}
         />
       </NativeTabs.Trigger>
 
+      {/* Create sits third of five — the centre slot, and the easiest reach for
+          a thumb. Discovery (Home, Explore) is to its left, the user's own
+          content (Tours, Profile) to its right. */}
       <NativeTabs.Trigger name="create">
-        <NativeTabs.Trigger.Label>Create</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          sf={{ default: "plus.circle", selected: "plus.circle.fill" }}
-          md={{ default: "add_circle_outline", selected: "add_circle" }}
-        />
+        <Label>Create</Label>
+        <Icon sf={{ default: "plus.circle", selected: "plus.circle.fill" }} />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="tours">
+        <Label>Tours</Label>
+        <Icon sf={{ default: "pano", selected: "pano.fill" }} />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="profile">
-        <NativeTabs.Trigger.Label>Profile</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          sf={{ default: "person", selected: "person.fill" }}
-          md={{ default: "person_outline", selected: "person" }}
-        />
+        <Label>Profile</Label>
+        {/* `sf` takes SF Symbol names — the native tab bar renders these itself,
+            so they are not part of the Feather migration. */}
+        <Icon sf={{ default: "person", selected: "person.fill" }} />
       </NativeTabs.Trigger>
     </NativeTabs>
   );

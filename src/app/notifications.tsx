@@ -1,4 +1,4 @@
-import { SymbolView } from 'expo-symbols';
+import Feather from '@expo/vector-icons/Feather';
 import { useCallback, useEffect, useState } from 'react';
 import {
   FlatList,
@@ -12,8 +12,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { NotificationRowSkeleton } from '@/components/notification-row-skeleton';
 import { AppButton } from '@/components/ui/app-button';
-import { EmptyState } from '@/components/ui/empty-state';
+import { EmptyState } from '@/components/ui/state-views';
 import { ScreenHeader } from '@/components/ui/screen-header';
+import { formatCount, formatRelativeTime } from '@/utils/format';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
@@ -22,26 +23,15 @@ import { notificationService } from '@/services/notification.service';
 import type { AppNotification, NotificationType } from '@/types/notification';
 
 const TYPE_META: Record<string, { icon: string; label: string }> = {
-  testimony_submitted: { icon: 'doc.text.fill', label: 'Submission' },
-  feedback_resolved: { icon: 'checkmark.bubble.fill', label: 'Feedback' },
+  testimony_submitted: { icon: 'file-text', label: 'Submission' },
+  feedback_resolved: { icon: 'check-circle', label: 'Feedback' },
   ai_connection: { icon: 'sparkles', label: 'AI Discovery' },
 };
 
 function getTypeMeta(type: NotificationType) {
-  return TYPE_META[type] ?? { icon: 'bell.fill', label: 'Notification' };
+  return TYPE_META[type] ?? { icon: 'bell', label: 'Notification' };
 }
 
-function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'Just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
 
 function NotificationRow({
   notification,
@@ -67,10 +57,10 @@ function NotificationRow({
       onPress={() => isUnread && onRead(notification.id)}>
       {/* Icon */}
       <View style={[styles.iconWrap, { backgroundColor: isUnread ? theme.primary : theme.muted }]}>
-        <SymbolView
+        <Feather
           name={meta.icon as any}
           size={18}
-          tintColor={isUnread ? theme.primaryForeground : theme.mutedForeground}
+          color={isUnread ? theme.primaryForeground : theme.mutedForeground}
         />
       </View>
 
@@ -81,7 +71,7 @@ function NotificationRow({
             {notification.title}
           </ThemedText>
           <ThemedText themeColor="textSecondary" style={styles.rowTime}>
-            {timeAgo(notification.createdAt)}
+            {formatRelativeTime(notification.createdAt)}
           </ThemedText>
         </View>
         {notification.message ? (
@@ -164,7 +154,7 @@ export default function NotificationsScreen() {
         showBack
         rightAction={
           unreadCount > 0
-            ? { icon: 'checkmark.circle', onPress: handleMarkAll }
+            ? { icon: 'check-circle', onPress: handleMarkAll }
             : undefined
         }
       />
@@ -189,7 +179,7 @@ export default function NotificationsScreen() {
             unreadCount > 0 ? (
               <View style={styles.headerRow}>
                 <ThemedText themeColor="textSecondary" style={styles.headerCount}>
-                  {unreadCount} unread
+                  {formatCount(unreadCount)} unread
                 </ThemedText>
                 <AppButton
                   label="Mark all read"
@@ -204,7 +194,7 @@ export default function NotificationsScreen() {
           }
           ListEmptyComponent={
             <EmptyState
-              icon="bell.slash"
+              icon="bell-off"
               title="No notifications"
               description="You're all caught up. New notifications will appear here."
             />

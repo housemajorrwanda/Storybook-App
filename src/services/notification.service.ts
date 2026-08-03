@@ -1,15 +1,18 @@
-import api from './api';
+import api, { toArray } from './api';
 import type { AppNotification, UnreadCount } from '@/types/notification';
 
 export const notificationService = {
   getMyNotifications: async (): Promise<AppNotification[]> => {
-    const { data } = await api.get<AppNotification[]>('/notifications/me');
-    return data;
+    const { data } = await api.get<AppNotification[] | { data: AppNotification[] }>(
+      '/notifications/me',
+    );
+    return toArray(data);
   },
 
   getUnreadCount: async (): Promise<number> => {
     const { data } = await api.get<UnreadCount>('/notifications/me/unread-count');
-    return data.count;
+    // The backend field is `unreadCount`; `count` is a defensive fallback.
+    return data?.unreadCount ?? data?.count ?? 0;
   },
 
   markAllRead: async (): Promise<void> => {

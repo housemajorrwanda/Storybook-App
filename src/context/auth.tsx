@@ -9,6 +9,10 @@ type AuthContextValue = {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (fullName: string, email: string, password: string) => Promise<void>;
   signInWithGoogle: (googleAccessToken: string) => Promise<void>;
+  /** Adopt a JWT the backend issued directly, e.g. from the Google deep link. */
+  signInWithToken: (accessToken: string) => Promise<void>;
+  /** Saves profile edits and refreshes the cached user. */
+  updateProfile: (payload: { fullName?: string; residentPlace?: string }) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -55,13 +59,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(user);
   }
 
+  async function signInWithToken(accessToken: string) {
+    // The backend's OAuth callback hands back a JWT but no user payload, so the
+    // profile is fetched with the token already in place.
+    await saveToken(accessToken);
+    try {
+      const profile = await authService.getProfile();
+      setUser(profile);
+    } catch (error) {
+      await removeToken();
+      throw error;
+    }
+  }
+
+  async function updateProfile(payload: { fullName?: string; residentPlace?: string }) {
+    const updated = await authService.updateProfile(payload);
+    setUser(updated);
+  }
+
   async function signOut() {
     await removeToken();
     setUser(null);
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, signIn, signUp, signInWithGoogle, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        signIn,
+        signUp,
+        signInWithGoogle,
+        signInWithToken,
+        updateProfile,
+        signOut,
+      }}>
       {children}
     </AuthContext.Provider>
   );

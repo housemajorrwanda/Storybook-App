@@ -1,4 +1,4 @@
-import { SymbolView } from 'expo-symbols';
+import Feather from '@expo/vector-icons/Feather';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -11,8 +11,9 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import { EmptyState } from '@/components/ui/empty-state';
+import { EmptyState } from '@/components/ui/state-views';
 import { ScreenHeader } from '@/components/ui/screen-header';
+import { formatDate } from '@/utils/format';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
@@ -25,16 +26,16 @@ const STATUS_META: Record<TestimonyStatus, { label: string; icon: string; color:
   pending: {
     label: 'Under Review',
     icon: 'clock',
-    color: t => '#F59E0B',
+    color: t => t.mutedForeground,
   },
   approved: {
     label: 'Published',
-    icon: 'checkmark.circle.fill',
-    color: t => '#10B981',
+    icon: 'check-circle',
+    color: t => t.foreground,
   },
   rejected: {
     label: 'Rejected',
-    icon: 'xmark.circle.fill',
+    icon: 'x-circle',
     color: t => t.destructive,
   },
 };
@@ -60,10 +61,10 @@ function SubmissionRow({ testimony }: { testimony: Testimony }) {
       onPress={() => router.push({ pathname: '/testimony/[id]', params: { id: testimony.id } })}>
       {/* Type icon */}
       <View style={[styles.typeIcon, { backgroundColor: theme.secondary }]}>
-        <SymbolView
+        <Feather
           name={TYPE_ICONS[testimony.submissionType] as any}
           size={18}
-          tintColor={theme.mutedForeground}
+          color={theme.mutedForeground}
         />
       </View>
 
@@ -73,24 +74,31 @@ function SubmissionRow({ testimony }: { testimony: Testimony }) {
           {testimony.eventTitle}
         </ThemedText>
         <View style={styles.rowMeta}>
-          <SymbolView name={statusMeta.icon as any} size={12} tintColor={statusColor} />
+          <Feather name={statusMeta.icon as any} size={12} color={statusColor} />
           <ThemedText style={[styles.rowStatus, { color: statusColor }]}>
             {statusMeta.label}
           </ThemedText>
           <ThemedText themeColor="textSecondary" style={styles.rowDate}>
-            · {new Date(testimony.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            · {formatDate(testimony.createdAt)}
           </ThemedText>
         </View>
+        {/* Theme colours are hsl() strings, so appending a hex alpha ('…12')
+            produced an invalid colour and this box rendered untinted. It uses
+            real surface tokens now. */}
         {testimony.status === 'rejected' && testimony.adminFeedback ? (
-          <View style={[styles.feedbackBox, { backgroundColor: theme.destructive + '12', borderColor: theme.destructive + '30' }]}>
-            <ThemedText style={[styles.feedbackText, { color: theme.destructive }]}>
+          <View
+            style={[
+              styles.feedbackBox,
+              { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+            ]}>
+            <ThemedText themeColor="textSecondary" style={styles.feedbackText}>
               {testimony.adminFeedback}
             </ThemedText>
           </View>
         ) : null}
       </View>
 
-      <SymbolView name="chevron.right" size={14} tintColor={theme.mutedForeground} />
+      <Feather name="chevron-right" size={14} color={theme.mutedForeground} />
     </Pressable>
   );
 }
@@ -171,8 +179,8 @@ export default function MySubmissionsScreen() {
               <View style={styles.statsRow}>
                 {([
                   { label: 'Total', count: counts.total, color: theme.foreground },
-                  { label: 'Published', count: counts.approved, color: '#10B981' },
-                  { label: 'Pending', count: counts.pending, color: '#F59E0B' },
+                  { label: 'Published', count: counts.approved, color: theme.foreground },
+                  { label: 'Pending', count: counts.pending, color: theme.mutedForeground },
                   { label: 'Rejected', count: counts.rejected, color: theme.destructive },
                 ] as const).map(s => (
                   <View key={s.label} style={[styles.statCard, { backgroundColor: theme.secondary }]}>
@@ -185,7 +193,7 @@ export default function MySubmissionsScreen() {
           }
           ListEmptyComponent={
             <EmptyState
-              icon="doc.text"
+              icon="file-text"
               title="No submissions yet"
               description="Your submitted testimonies will appear here."
             />
