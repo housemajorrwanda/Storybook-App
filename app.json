@@ -17,7 +17,11 @@
         "backgroundColor": "#000000",
         "foregroundImage": "./assets/images/android-icon-foreground.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "output": "static",
@@ -60,9 +64,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "4a9e3e33-8e6b-4788-ab10-9c2005fca833"
+        "projectId": "e848273a-69ff-4881-a19a-3e0485f8e38b"
       }
     },
-    "owner": "nkusibeni"
+    "owner": "be_okay"
   }
 }
